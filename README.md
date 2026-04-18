@@ -30,8 +30,8 @@ cmake --build build --config Release --parallel
 If you just want to run the latest build in an isolated environment:
 
 ```sh
-docker pull ghcr.io/Des10Tiny/yash:latest
-docker run -it ghcr.io/Des10Tiny/yash:latest
+docker pull ghcr.io/des10tiny/yash:latest
+docker run -it ghcr.io/des10tiny/yash:latest
 ```
 
 ## License
