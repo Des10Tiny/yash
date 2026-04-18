@@ -13,6 +13,13 @@ if(CMAKE_EXPORT_COMPILE_COMMANDS AND UNIX)
     )
 endif()
 
+option(USE_SANITIZERS "Enable Address and UndefinedBehavior sanitizers" OFF)
+
+if(USE_SANITIZERS)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address,undefined -g -O1 -fno-omit-frame-pointer")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address,undefined")
+endif()
+
 add_subdirectory(src)
 
 option(BUILD_TESTS "Build all unit tests" ON)
@@ -32,4 +39,13 @@ endif()
 if(BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
+endif()
+
+find_program(CLANG_FORMAT_EXE clang-format)
+if(CLANG_FORMAT_EXE)
+    file(GLOB_RECURSE FORMAT_SOURCES "src/*.cpp" "src/*.hpp" "tests/*.cpp")
+    add_custom_target(format
+        COMMAND ${CLANG_FORMAT_EXE} -i ${FORMAT_SOURCES}
+        COMMENT "Running clang-format on all C++ source files..."
+    )
 endif()

@@ -1,4 +1,5 @@
 build/
+build_sanitize
 *.pdf
 .DS_Store
 *.out
