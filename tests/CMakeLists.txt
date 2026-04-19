@@ -11,6 +11,7 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
 add_executable(yashTests
     yash_main_tests.cpp
+    tokenizer_tests.cpp
 )
 
 target_compile_definitions(yashTests PRIVATE UNIT_TEST)
