@@ -129,3 +129,26 @@ TEST(TokenizerTest, NoSpaceNoDouble) {
     tokenizer.Next();
     EXPECT_TRUE(tokenizer.IsEnd());
 }
+
+TEST(TokenizerTest, InsideQuotesNoSplit) {
+    std::stringstream ss{R"(echo "hello | grep")"};
+    Tokenizer tokenizer{&ss};
+    EXPECT_FALSE(tokenizer.IsEnd());
+
+    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("echo")});
+    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("echo")});
+    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("echo")});
+
+    EXPECT_FALSE(tokenizer.IsEnd());
+
+    tokenizer.Next();
+    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken{"hello | grep"}});
+    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken{"hello | grep"}});
+    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken{"hello | grep"}});
+
+    tokenizer.Next();
+    EXPECT_TRUE(tokenizer.IsEnd());
+    EXPECT_TRUE(tokenizer.IsEnd());
+    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken{"hello | grep"}});
+    EXPECT_TRUE(tokenizer.IsEnd());
+}
