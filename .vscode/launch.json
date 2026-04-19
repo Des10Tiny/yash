@@ -12,6 +12,15 @@
             "args": [],
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "cmake_build"
-        }
+        },
+        {
+            "name": "Debug Tests",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/tests/yashTests",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "cmake_build"
+        },
     ]
 }
