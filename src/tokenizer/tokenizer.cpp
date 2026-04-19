@@ -12,7 +12,7 @@ bool IsSpecialChar(char c) {
     return c == '|' || c == '>' || c == '<';
 }
 
-std::string ExtractValue(std::istream* data, bool& is_end) {
+std::string ExtractValue(std::istream* data) {
     std::string result_value;
     State state = State::NORMAL;
 
@@ -23,7 +23,6 @@ std::string ExtractValue(std::istream* data, bool& is_end) {
             if (state != State::NORMAL) {
                 throw std::runtime_error("Quote not closed");
             }
-            is_end = true;
             break;
         }
 
@@ -133,7 +132,7 @@ void Tokenizer::Next() {
         }
 
         original_data_->unget();
-        std::string extracted_value = ExtractValue(original_data_, is_end_);
+        std::string extracted_value = ExtractValue(original_data_);
         current_token_ = WordToken{std::move(extracted_value)};
         return;
     }

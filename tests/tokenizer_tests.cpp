@@ -17,7 +17,7 @@ TEST(TokenizerTest, SimpleCase) {
     EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("grep")});
 
     tokenizer.Next();
-    EXPECT_TRUE(tokenizer.IsEnd());
+    EXPECT_FALSE(tokenizer.IsEnd());
     EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("somthing new")});
 
     tokenizer.Next();
