@@ -110,3 +110,22 @@ TEST(TokenizerTest, EmptyString) {
 
     EXPECT_TRUE(tokenizer.IsEnd());
 }
+
+TEST(TokenizerTest, NoSpaceNoDouble) {
+    std::stringstream ss{"ls>trash.json"};
+    Tokenizer tokenizer{&ss};
+    EXPECT_FALSE(tokenizer.IsEnd());
+
+    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("ls")});
+    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("ls")});
+    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("ls")});
+
+    tokenizer.Next();
+    EXPECT_EQ(tokenizer.GetToken(), Token{RedirectToken::REDIRECT_OUT});
+
+    tokenizer.Next();
+    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken{"trash.json"}});
+
+    tokenizer.Next();
+    EXPECT_TRUE(tokenizer.IsEnd());
+}
