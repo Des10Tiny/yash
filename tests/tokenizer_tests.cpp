@@ -17,7 +17,7 @@ TEST(TokenizerTest, SimpleCase) {
     EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("grep")});
 
     tokenizer.Next();
-    EXPECT_FALSE(tokenizer.IsEnd());
+    EXPECT_TRUE(tokenizer.IsEnd());
     EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("somthing new")});
 
     tokenizer.Next();
@@ -151,4 +151,45 @@ TEST(TokenizerTest, InsideQuotesNoSplit) {
     EXPECT_TRUE(tokenizer.IsEnd());
     EXPECT_EQ(tokenizer.GetToken(), Token{WordToken{"hello | grep"}});
     EXPECT_TRUE(tokenizer.IsEnd());
+}
+
+TEST(TokenizerTest, EmptyQuotes) {
+    std::stringstream ss{R"(echo "")"};
+    Tokenizer t{&ss};
+
+    EXPECT_EQ(t.GetToken(), Token{WordToken("echo")});
+
+    t.Next();
+    EXPECT_EQ(t.GetToken(), Token{WordToken("")});
+
+    t.Next();
+    EXPECT_TRUE(t.IsEnd());
+}
+
+TEST(TokenizerTest, MixedQuotesSingleWord) {
+    std::stringstream ss{R"(echo "hello"world'!')"};
+    Tokenizer t{&ss};
+
+    EXPECT_EQ(t.GetToken(), Token{WordToken("echo")});
+
+    t.Next();
+    EXPECT_EQ(t.GetToken(), Token{WordToken("helloworld!")});
+}
+
+TEST(TokenizerTest, UnclosedDoubleQuoteThrows) {
+    std::stringstream ss{R"(echo "this is unclosed)"};
+    Tokenizer t{&ss};
+
+    EXPECT_EQ(t.GetToken(), Token{WordToken("echo")});
+
+    EXPECT_THROW(t.Next(), std::runtime_error);
+}
+
+TEST(TokenizerTest, UnclosedSingleQuoteThrows) {
+    std::stringstream ss{R"(echo 'this is unclosed)"};
+    Tokenizer t{&ss};
+
+    EXPECT_EQ(t.GetToken(), Token{WordToken("echo")});
+
+    EXPECT_THROW(t.Next(), std::runtime_error);
 }
