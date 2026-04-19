@@ -1,13 +1,10 @@
-# Release v0.1.0: Add Tokenizer and State Machine
+# Release v0.1.1: Interactive Demo & Fixes
 
 ### Added
 
-- Implemented Tokenizer with State Machine logic.
-- Added support for pipe (`|`) and redirection (`>`, `<`, `>>`, `<<`).
-- Implemented state-based quote handling (single and double quotes).
-- Added comprehensive Google Test suite covering edge cases.
+- Interactive demo mode (`main.cpp`) to test tokenization in real-time.
+- Graceful handling of `Ctrl+C` (SIGINT) in the REPL loop.
 
-### Changed
+### Fixed
 
-- Improved memory safety with explicit type casting and character handling.
-- Optimized token parsing using internal namespace and state machine.
+- Fixed a bug where the `Tokenizer` would silently drop the final token if it wasn't followed by a space or newline.
