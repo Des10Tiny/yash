@@ -15,25 +15,87 @@ bool Tokenizer::IsEnd() {
 Token Tokenizer::GetToken() {
     return current_token_;
 }
-std::string ExtractValue(std::istream* data, bool& is_end, char started_symbol) {
+
+bool IsSpecialChar(char c) {
+    return c == '|' || c == '>' || c == '<';
+}
+
+enum class State : std::uint8_t { NORMAL, IN_SINGLE, IN_DOUBLE };
+
+std::string ExtractValue(std::istream* data, bool& is_end) {
     std::string result_value;
-    result_value += static_cast<unsigned char>(started_symbol);
+    State state = State::NORMAL;
 
     while (true) {
         int curr_char = data->get();
 
-        if (curr_char == EOF) {
-            is_end = true;
-            break;
+        if (state == State::NORMAL) {
+            if (curr_char == EOF) {
+                is_end = true;
+                break;
+            }
+
+            if (std::isspace(static_cast<unsigned char>(curr_char))) {
+                break;
+            }
+
+            if (IsSpecialChar(static_cast<unsigned char>(curr_char))) {
+                data->unget();
+                break;
+            }
+
+            if (static_cast<unsigned char>(curr_char) == '\'') {
+                state = State::IN_SINGLE;
+                continue;
+            }
+
+            if (static_cast<unsigned char>(curr_char) == '\"') {
+                state = State::IN_DOUBLE;
+                continue;
+            }
+
+            if (std::isprint(static_cast<unsigned char>(curr_char))) {
+                result_value += curr_char;
+                continue;
+            }
+
+            throw std::runtime_error("Find non ASCII symbol");
         }
 
-        if (std::isspace(static_cast<unsigned char>(curr_char))) {
-            break;
+        else if (state == State::IN_SINGLE) {
+            if (curr_char == EOF) {
+                throw std::runtime_error("Single quote not closed");
+            }
+
+            if (curr_char == '\'') {
+                state = State::NORMAL;
+                break;
+            }
+
+            if (std::isprint(static_cast<unsigned char>(curr_char))) {
+                result_value += curr_char;
+                continue;
+            }
+
+            throw std::runtime_error("Find non ASCII symbol");
         }
 
-        if (static_cast<unsigned char>(curr_char) <= 127) {
-            result_value += curr_char;
-            continue;
+        else if (state == State::IN_DOUBLE) {
+            if (curr_char == EOF) {
+                throw std::runtime_error("Double quote not closed");
+            }
+
+            if (curr_char == '\"') {
+                state = State::NORMAL;
+                break;
+            }
+
+            if (std::isprint(static_cast<unsigned char>(curr_char))) {
+                result_value += curr_char;
+                continue;
+            }
+
+            throw std::runtime_error("Find non ASCII symbol");
         }
 
         throw std::runtime_error("Find non ASCII symbol");
@@ -90,11 +152,9 @@ void Tokenizer::Next() {
             return;
         }
 
-        // if (static_cast<char>(current_char) == '"') {
-        // }
-
-        if (static_cast<unsigned char>(current_char) <= 127) {
-            std::string extracted_value = ExtractValue(original_data_, is_end_, current_char);
+        if (std::isprint(static_cast<unsigned char>(current_char))) {
+            original_data_->unget();
+            std::string extracted_value = ExtractValue(original_data_, is_end_);
             current_token_ = WordToken{std::move(extracted_value)};
 
             return;
