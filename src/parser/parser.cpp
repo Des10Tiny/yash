@@ -1,10 +1,42 @@
 #include "parser.hpp"
+
+#include <optional>
 #include <stdexcept>
 #include <variant>
 #include "tokenizer/tokenizer.hpp"
 
-std::optional<Pipeline> Parser::ParsePipline() {
-    tokenizer_.Next();
+std::optional<Pipeline> Parser::ParsePipeline() {
+    Pipeline pipeline;
+
+    if (!tokenizer_.IsEnd() && std::holds_alternative<PipeToken>(tokenizer_.GetToken())) {
+        throw std::runtime_error("Syntax error:\nUnexpected token '|'");
+    }
+
+    std::optional<Command> cmd = ParseCommand();
+
+    if (cmd.has_value()) {
+        pipeline.commands.push_back(cmd.value());
+
+        while (!tokenizer_.IsEnd()) {
+
+            if (std::holds_alternative<PipeToken>(tokenizer_.GetToken())) {
+
+                tokenizer_.Next();
+                std::optional<Command> next_cmd = ParseCommand();
+
+                if (!next_cmd.has_value()) {
+                    throw std::runtime_error("Syntax error:\nExpected command after pipe, got EOF");
+                }
+                pipeline.commands.push_back(next_cmd.value());
+
+            } else {
+                break;
+            }
+        }
+
+        return pipeline;
+    }
+
     return std::nullopt;
 }
 

@@ -21,7 +21,7 @@ public:
     Parser(Tokenizer& tokenizer) : tokenizer_(tokenizer) {
     }
 
-    std::optional<Pipeline> ParsePipline();
+    std::optional<Pipeline> ParsePipeline();
     std::optional<Command> ParseCommand();
 
 private:
