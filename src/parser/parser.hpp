@@ -6,7 +6,6 @@
 #include "tokenizer/tokenizer.hpp"
 
 struct Command {
-    std::string value;
     std::vector<std::string> args;
     std::string redirect_in;
     std::string redirect_out;
@@ -22,7 +21,8 @@ public:
     Parser(Tokenizer& tokenizer) : tokenizer_(tokenizer) {
     }
 
-    std::optional<Pipeline> ParseAll();
+    std::optional<Pipeline> ParsePipline();
+    std::optional<Command> ParseCommand();
 
 private:
     Tokenizer& tokenizer_;
