@@ -1,6 +1,7 @@
 add_library(yash_lib STATIC
     tokenizer/tokenizer.cpp
     parser/parser.cpp
+    executor/executor.cpp
 )
 
 if(MSVC)
