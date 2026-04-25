@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "tokenizer/tokenizer.hpp"
+#include "utils/yash_error.hpp"
 
 TEST(TokenizerTest, SimpleCase) {
     std::stringstream ss{R"(ls | grep "somthing new")"};
@@ -182,7 +183,7 @@ TEST(TokenizerTest, UnclosedDoubleQuoteThrows) {
 
     EXPECT_EQ(t.GetToken(), Token{WordToken("echo")});
 
-    EXPECT_THROW(t.Next(), std::runtime_error);
+    EXPECT_THROW(t.Next(), YashSyntaxError);
 }
 
 TEST(TokenizerTest, UnclosedSingleQuoteThrows) {
@@ -191,5 +192,5 @@ TEST(TokenizerTest, UnclosedSingleQuoteThrows) {
 
     EXPECT_EQ(t.GetToken(), Token{WordToken("echo")});
 
-    EXPECT_THROW(t.Next(), std::runtime_error);
+    EXPECT_THROW(t.Next(), YashSyntaxError);
 }

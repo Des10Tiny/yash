@@ -1,15 +1,16 @@
 #include "parser.hpp"
 
 #include <optional>
-#include <stdexcept>
 #include <variant>
+
 #include "tokenizer/tokenizer.hpp"
+#include "utils/yash_error.hpp"
 
 std::optional<Pipeline> Parser::ParsePipeline() {
     Pipeline pipeline;
 
     if (!tokenizer_.IsEnd() && std::holds_alternative<PipeToken>(tokenizer_.GetToken())) {
-        throw std::runtime_error("Syntax error:\nUnexpected token '|'");
+        throw YashSyntaxError("Unexpected token '|'");
     }
 
     std::optional<Command> cmd = ParseCommand();
@@ -25,7 +26,7 @@ std::optional<Pipeline> Parser::ParsePipeline() {
                 std::optional<Command> next_cmd = ParseCommand();
 
                 if (!next_cmd.has_value()) {
-                    throw std::runtime_error("Syntax error:\nExpected command after pipe, got EOF");
+                    throw YashSyntaxError("Expected command after pipe, got EOF");
                 }
                 pipeline.commands.push_back(next_cmd.value());
 
@@ -58,8 +59,7 @@ std::optional<Command> Parser::ParseCommand() {
             tokenizer_.Next();
 
             if (tokenizer_.IsEnd()) {
-                throw std::runtime_error(
-                    "Syntax error:\nExpected filename after redirect, got EOF");
+                throw YashSyntaxError("Expected filename after redirect, got EOF");
             }
 
             curr_token = tokenizer_.GetToken();
@@ -77,13 +77,12 @@ std::optional<Command> Parser::ParseCommand() {
                     cmd.append_out = true;
 
                 } else if (type == RedirectToken::HERE_DOC) {
-                    throw std::runtime_error("Not implemented");
+                    throw YashSyntaxError("Not implemented");
                 }
 
                 tokenizer_.Next();
             } else {
-                throw std::runtime_error(
-                    "Syntax error:\nExpected filename after redirect, got unexpected token");
+                throw YashSyntaxError("Expected filename after redirect, got unexpected token");
             }
         }
     }

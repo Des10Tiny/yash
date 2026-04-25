@@ -2,8 +2,9 @@
 
 #include <cctype>
 #include <cstdio>
-#include <stdexcept>
 #include <string>
+
+#include "utils/yash_error.hpp"
 
 namespace {
 enum class State : std::uint8_t { NORMAL, IN_SINGLE, IN_DOUBLE };
@@ -21,13 +22,13 @@ std::string ExtractValue(std::istream* data) {
 
         if (curr_char == EOF) {
             if (state != State::NORMAL) {
-                throw std::runtime_error("Quote not closed");
+                throw YashSyntaxError("Quote not closed");
             }
             break;
         }
 
         if (!std::isprint(curr_char) && !std::isspace(curr_char)) {
-            throw std::runtime_error("Found non-printable symbol");
+            throw YashSyntaxError("Found non-printable symbol");
         }
 
         if (state == State::NORMAL) {

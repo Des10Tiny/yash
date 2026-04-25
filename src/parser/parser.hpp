@@ -22,8 +22,8 @@ public:
     }
 
     std::optional<Pipeline> ParsePipeline();
-    std::optional<Command> ParseCommand();
 
 private:
+    std::optional<Command> ParseCommand();
     Tokenizer& tokenizer_;
 };
