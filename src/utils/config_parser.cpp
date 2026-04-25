@@ -47,7 +47,7 @@ YashConfig ConfigParser::Parse(const std::string& filename) {
                 std::string alias_name = key.substr(6);
                 config.aliases[alias_name] = value;
             } else {
-                LOG_WARN("Unknown config key ignored: " + key);
+                config.load_warnings.push_back("Unknown config key ignored: " + key);
             }
         }
     }

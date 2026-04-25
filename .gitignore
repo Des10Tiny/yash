@@ -7,3 +7,5 @@ build_sanitize
 .cache/
 compile_commands.json
 Testing/
+yash.log
+.yash.conf

@@ -8,6 +8,7 @@
 struct YashConfig {
     LogLevel log_level = LogLevel::NONE;
     std::unordered_map<std::string, std::string> aliases;
+    std::vector<std::string> load_warnings;
 };
 
 class ConfigParser {

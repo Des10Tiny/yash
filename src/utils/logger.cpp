@@ -39,10 +39,10 @@ std::string Logger::LevelToString(LogLevel level) {
             return "FATAL";
         }
         case LogLevel::WARNING: {
-            return "WARN ";
+            return "WARN";
         }
         case LogLevel::INFO: {
-            return "INFO ";
+            return "INFO";
         }
         case LogLevel::DEBUG: {
             return "DEBUG";
