@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 #include <sstream>
 #include <stdexcept>
+
 #include "parser/parser.hpp"
+#include "utils/yash_error.hpp"
 
 std::optional<Pipeline> ParseString(const std::string& input) {
     std::stringstream ss{input};
@@ -99,29 +101,29 @@ TEST(ParserTest, PipesWithRedirects) {
 }
 
 TEST(ParserTest, ErrorMissingFileAfterRedirectOut) {
-    EXPECT_THROW(ParseString("echo hello >"), std::runtime_error);
-    EXPECT_THROW(ParseString("echo hello >    "), std::runtime_error);
+    EXPECT_THROW(ParseString("echo hello >"), YashSyntaxError);
+    EXPECT_THROW(ParseString("echo hello >    "), YashSyntaxError);
 }
 
 TEST(ParserTest, ErrorWrongTokenAfterRedirect) {
-    EXPECT_THROW(ParseString("ls > | grep"), std::runtime_error);
-    EXPECT_THROW(ParseString("ls > > log.txt"), std::runtime_error);
-    EXPECT_THROW(ParseString("ls < <"), std::runtime_error);
+    EXPECT_THROW(ParseString("ls > | grep"), YashSyntaxError);
+    EXPECT_THROW(ParseString("ls > > log.txt"), YashSyntaxError);
+    EXPECT_THROW(ParseString("ls < <"), YashSyntaxError);
 }
 
 TEST(ParserTest, ErrorDanglingPipe) {
-    EXPECT_THROW(ParseString("ls |"), std::runtime_error);
-    EXPECT_THROW(ParseString("ls |    "), std::runtime_error);
+    EXPECT_THROW(ParseString("ls |"), YashSyntaxError);
+    EXPECT_THROW(ParseString("ls |    "), YashSyntaxError);
 }
 
 TEST(ParserTest, ErrorDoublePipe) {
     // Untill i make ||
-    EXPECT_THROW(ParseString("ls || grep"), std::runtime_error);
-    EXPECT_THROW(ParseString("ls | | grep"), std::runtime_error);
+    EXPECT_THROW(ParseString("ls || grep"), YashSyntaxError);
+    EXPECT_THROW(ParseString("ls | | grep"), YashSyntaxError);
 }
 
 TEST(ParserTest, ErrorPipeAtStart) {
-    EXPECT_THROW(ParseString("| ls"), std::runtime_error);
+    EXPECT_THROW(ParseString("| ls"), YashSyntaxError);
 }
 
 TEST(ParserTest, RedirectInTheMiddleOfArgs) {

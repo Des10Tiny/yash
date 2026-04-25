@@ -13,6 +13,8 @@ add_executable(yashTests
     yash_main_tests.cpp
     tokenizer_tests.cpp
     parser_tests.cpp
+    scoped_fd_test.cpp
+    config_parser_test.cpp
 )
 
 target_compile_definitions(yashTests PRIVATE UNIT_TEST)
