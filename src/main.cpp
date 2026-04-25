@@ -3,8 +3,12 @@
 #include <sstream>
 #include <csignal>
 #include <cstdlib>
+
 #include "tokenizer/tokenizer.hpp"
 #include "parser/parser.hpp"
+#include "utils/config_parser.hpp"
+#include "utils/logger.hpp"
+#include "utils/yash_error.hpp"
 
 volatile std::sig_atomic_t g_signal_status = 0;
 
@@ -46,8 +50,28 @@ void PrintPipeline(const Pipeline& pipeline) {
 int main() {
     std::signal(SIGINT, SignalHandler);
 
+    ConfigParser conf_parser;
+    YashConfig config = conf_parser.Parse(".yash.conf");
+
+    Logger::Init(config.log_level, "yash.log");
+    LOG_INFO("yash shell initialized successfully");
+
+    for (const auto& warning : config.load_warnings) {
+        LOG_WARN(warning);
+    }
+
+    LOG_INFO(std::to_string(config.aliases.size()) + " added alias");
+
+    for (const auto& i : config.aliases) {
+        std::string msg = "Loaded alias ";
+        msg += "key= " + i.first + ", value= " + i.second;
+        LOG_DEBUG(msg);
+    };
+
     std::cout << "yash (Parser AST Demo Mode)\n";
     std::cout << "Type 'exit' to quit or Ctrl+C to stop.\n";
+
+    int last_exit_status = ExitCode::SUCCESS;
 
     std::string line;
     while (true) {
@@ -65,6 +89,8 @@ int main() {
             continue;
         }
 
+        LOG_DEBUG("User input: " + line);
+
         std::stringstream ss{line};
         try {
             Tokenizer tokenizer{&ss};
@@ -72,13 +98,27 @@ int main() {
 
             if (auto pipeline = parser.ParsePipeline()) {
                 PrintPipeline(*pipeline);
+                last_exit_status = ExitCode::SUCCESS;
             }
 
+        } catch (const YashSyntaxError& e) {
+            std::cerr << e.what() << '\n';
+            last_exit_status = e.GetCode();
+            LOG_WARN("Syntax error caught");
+
+        } catch (const YashError& e) {
+            std::cerr << e.what() << '\n';
+            last_exit_status = e.GetCode();
+            LOG_WARN(std::string("Execution error: ") + e.what());
+
         } catch (const std::exception& e) {
-            std::cerr << "yash: " << e.what() << '\n';
+            std::cerr << "yash: unexpected fatal error: " << e.what() << '\n';
+            last_exit_status = ExitCode::GENERAL_FAILURE;
+            LOG_FATAL(std::string("Fatal exception: ") + e.what());
         }
     }
 
+    LOG_INFO("yash shell shutting down");
     std::cout << "bye!\n";
-    return 0;
+    return last_exit_status;
 }
