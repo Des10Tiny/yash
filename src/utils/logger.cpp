@@ -12,11 +12,17 @@ void Logger::Init(LogLevel level, const std::string& filename) {
         return;
     }
 
-    file.open(filename, std::ios::out | std::ios::trunc);
+    file.open(filename, std::ios::out | std::ios::app);
 
     if (!file.is_open()) {
         std::cerr << "yash warning: failed to open log file '" << filename << "'\n";
     }
+
+    file << "\n===============================================================\n"
+         << "[" << GetCurrentTime() << "] [PID:" << getpid() << "] "
+         << "YASH SESSION STARTED (Log Level: " << LevelToString(level) << ")\n"
+         << "===============================================================\n";
+    file.flush();
 }
 
 void Logger::Write(LogLevel level, const std::string& msg) {

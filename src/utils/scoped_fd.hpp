@@ -1,17 +1,19 @@
 #pragma once
 
 #include <unistd.h>
-#include <iostream>
-#include <stdexcept>
 #include <utility>
 #include <array>
 
+#include "utils/logger.hpp"
+#include "utils/yash_error.hpp"
+
 class ScopedFD {
+public:
     ScopedFD() {
         std::array<int, 2> raw_pipe_fd;
 
         if (pipe(raw_pipe_fd.data()) == -1) {
-            throw std::runtime_error("Critical failure:\nCannot make new pipe");
+            throw YashSystemError("Cannot make new pipe");
         }
 
         raw_read_fd_ = raw_pipe_fd[0];
@@ -44,7 +46,8 @@ class ScopedFD {
     void CloseRawReadFD() {
         if (raw_read_fd_ != -1) {
             if (close(raw_read_fd_) == -1) {
-                throw std::runtime_error("Critical failure:\nCannot close Read File Descriptor");
+                throw YashSystemError("Cannot close Read File Descriptor: " +
+                                      std::to_string(raw_read_fd_));
             }
             raw_read_fd_ = -1;
         }
@@ -53,7 +56,8 @@ class ScopedFD {
     void CloseRawWriteFD() {
         if (raw_write_fd_ != -1) {
             if (close(raw_write_fd_) == -1) {
-                throw std::runtime_error("Critical failure:\nCannot close Write File Descriptor");
+                throw YashSystemError("Cannot close Write File Descriptor: " +
+                                      std::to_string(raw_read_fd_));
             }
             raw_write_fd_ = -1;
         }
@@ -70,13 +74,13 @@ class ScopedFD {
     ~ScopedFD() {
         if (raw_read_fd_ != -1) {
             if (close(raw_read_fd_) == -1) {
-                std::cerr << ("Critical failure:\nCannot close Read File Descriptor") << '\n';
+                LOG_WARN("Cannot close Read File Descriptor: " + std::to_string(raw_read_fd_));
             }
         }
 
         if (raw_write_fd_ != -1) {
             if (close(raw_write_fd_) == -1) {
-                std::cerr << ("Critical failure:\nCannot close Read Write Descriptor") << '\n';
+                LOG_WARN("Cannot close Write File Descriptor: " + std::to_string(raw_read_fd_));
             }
         }
     }
