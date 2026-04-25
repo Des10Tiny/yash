@@ -63,8 +63,7 @@ int main() {
     LOG_INFO(std::to_string(config.aliases.size()) + " added alias");
 
     for (const auto& i : config.aliases) {
-        std::string msg = "Loaded alias ";
-        msg += "key= " + i.first + ", value= " + i.second;
+        std::string msg = std::string("Loaded alias ") + "key= " + i.first + ", value= " + i.second;
         LOG_DEBUG(msg);
     };
 
@@ -104,7 +103,7 @@ int main() {
         } catch (const YashSyntaxError& e) {
             std::cerr << e.what() << '\n';
             last_exit_status = e.GetCode();
-            LOG_WARN("Syntax error caught");
+            LOG_WARN(std::string(e.what()));
 
         } catch (const YashError& e) {
             std::cerr << e.what() << '\n';
