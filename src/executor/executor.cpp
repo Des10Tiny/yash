@@ -64,6 +64,11 @@ int Executor::RunPipeline(Pipeline& pipeline) {
             }
 
             if (curr_pid == 0) {
+                if (i.args.empty()) {
+                    LOG_DEBUG("Executor(): Command is empty");
+                    std::_Exit(0);
+                }
+
                 if (prev_read_fd.GetRawReadFD() != -1) {
                     int dup2_read_status = dup2(prev_read_fd.GetRawReadFD(), STDIN_FILENO);
 
@@ -169,13 +174,15 @@ int Executor::WaitForAllChildren(const std::vector<pid_t>& all_children_to_wait)
                       " ended with the code: " + std::to_string(WEXITSTATUS(status))
 
             );
+
+            last_status = WEXITSTATUS(status);
         } else if (WIFSIGNALED(status)) {
             LOG_WARN("Process pid= " + std::to_string(curr_child_pid) +
                      " was killed by a signal: " + std::to_string(WTERMSIG(status))
 
             );
+            last_status = 128 + WTERMSIG(status);
         }
-        last_status = status;
     }
 
     return last_status;
