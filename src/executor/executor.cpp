@@ -1,8 +1,10 @@
 #include <unistd.h>
+#include <cerrno>
 #include <iostream>
 #include <string>
 #include <vector>
 #include <sys/wait.h>
+#include <cstdlib>
 
 #include "executor.hpp"
 #include "parser/parser.hpp"
@@ -16,7 +18,7 @@ Executor::Executor() {
 }
 
 int Executor::RunPipeline(Pipeline& pipeline) {
-    if (pipeline.commands.empty() && pipeline.commands[0].args.empty()) {
+    if (pipeline.commands.empty() || pipeline.commands[0].args.empty()) {
         return 0;
     }
 
@@ -32,13 +34,21 @@ int Executor::RunPipeline(Pipeline& pipeline) {
         std::vector<pid_t> all_children_to_wait;
         all_children_to_wait.reserve(size_of_pipline);
 
-        ScopedFD prev_read_fd{-1, -1};
+        ScopedFD prev_read_fd{true};
 
         for (Command& i : pipeline.commands) {
-            ScopedFD pipe;
+            ScopedFD pipe{true};
 
-            if (curr_size == size_of_pipline - 1) {
-                pipe.CloseAllRawFD();
+            if (curr_size != size_of_pipline - 1) {
+                LOG_DEBUG(std::string("Executor(): Ask new fd")
+
+                );
+                pipe.TakeNewFD();
+                LOG_DEBUG(std::string("Get new fd") +
+                          "Read=" + std::to_string(pipe.GetRawReadFD()) +
+                          " Write=" + std::to_string(pipe.GetRawWriteFD())
+
+                );
             }
 
             LOG_DEBUG(std::string("Make new pipe ") +
@@ -82,16 +92,55 @@ int Executor::RunPipeline(Pipeline& pipeline) {
 
                 );
 
+                prev_read_fd.CloseRawReadFD();
                 std::vector<char*> char_vector = CharFromVectorHandler(i.args);
                 execvp(char_vector[0], char_vector.data());
 
-                LOG_DEBUG(std::string("Command \'") + char_vector[0] + "\' not found");
+                switch (errno) {
+                    case EACCES: {
+                        LOG_DEBUG(
+                            std::string("Command \'") + char_vector[0] + "\'. Permission denied"
 
-                std::cerr << std::string("Command \'") + char_vector[0] + "\' not found" << '\n';
-                _exit(ExitCode::COMMAND_NOT_FOUND);
+                        );
+
+                        std::cerr << std::string("Command \'") + char_vector[0] +
+                                         "\'. Permission denied "
+                                  << '\n';
+
+                        std::_Exit(ExitCode::PERMISSION_DENIED);
+                    }
+
+                    case ENOENT: {
+                        LOG_DEBUG(std::string("Command \'") + char_vector[0] + "\' not found"
+
+                        );
+                        std::cerr << std::string("Command \'") + char_vector[0] + "\' not found"
+                                  << '\n';
+                        std::_Exit(ExitCode::COMMAND_NOT_FOUND);
+                    }
+
+                    default: {
+                        LOG_WARN(std::string("Command \'") + char_vector[0] + "\' execution failed"
+
+                        );
+                        std::cerr << "yash: execution failed: " << char_vector[0] << '\n';
+                        std::_Exit(ExitCode::GENERAL_FAILURE);
+                    }
+                }
 
             } else {
+                LOG_DEBUG(std::string("Prev read FD before move Read=") +
+                          std::to_string(prev_read_fd.GetRawReadFD()) +
+                          " Write=" + std::to_string(prev_read_fd.GetRawWriteFD())
+
+                );
                 prev_read_fd = std::move(pipe);
+                LOG_DEBUG(std::string("Prev read FD after move Read=") +
+                          std::to_string(prev_read_fd.GetRawReadFD()) +
+                          " Write=" + std::to_string(prev_read_fd.GetRawWriteFD())
+
+                );
+
                 prev_read_fd.CloseRawWriteFD();
                 all_children_to_wait.push_back(curr_pid);
             }
@@ -99,14 +148,15 @@ int Executor::RunPipeline(Pipeline& pipeline) {
             curr_size++;
         }
 
-        WaitForAllChildren(all_children_to_wait);
+        return WaitForAllChildren(all_children_to_wait);
     }
 
-    return 0;
+    return -1;
 }
 
 int Executor::WaitForAllChildren(const std::vector<pid_t>& all_children_to_wait) {
     int last_status = 0;
+
     for (pid_t curr_child_pid : all_children_to_wait) {
         int status;
 
@@ -127,5 +177,6 @@ int Executor::WaitForAllChildren(const std::vector<pid_t>& all_children_to_wait)
         }
         last_status = status;
     }
+
     return last_status;
 }
