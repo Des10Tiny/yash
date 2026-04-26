@@ -14,17 +14,28 @@ public:
         std::array<int, 2> raw_pipe_fd;
 
         if (pipe(raw_pipe_fd.data()) == -1) {
-            throw YashSystemError("Cannot make new pipe");
+            throw YashSystemError("ScopedFD(): Cannot make new pipe");
         }
 
         raw_read_fd_ = raw_pipe_fd[0];
         raw_write_fd_ = raw_pipe_fd[1];
+        is_both_fd_correct_ = true;
 
-        LOG_DEBUG(std::string("Get current FD: Read=") + std::to_string(raw_read_fd_) +
+        LOG_DEBUG(std::string("ScopedFD(): Get current FD: Read=") + std::to_string(raw_read_fd_) +
                   " Write=" + std::to_string(raw_write_fd_)
 
         );
     }
+
+    explicit ScopedFD(bool is_need_to_be_empty) {
+        if (is_need_to_be_empty) {
+            raw_read_fd_ = -1;
+            raw_write_fd_ = -1;
+            is_both_fd_correct_ = false;
+        } else {
+            LOG_WARN("ScopedFD(bool is_need_to_be_emty): You doing something nasty");
+        }
+    };
 
     ScopedFD(int raw_read_fd, int raw_write_fd)
         : raw_read_fd_(raw_read_fd), raw_write_fd_(raw_write_fd) {
@@ -36,6 +47,7 @@ public:
     ScopedFD(ScopedFD&& other) noexcept {
         raw_read_fd_ = std::exchange(other.raw_read_fd_, -1);
         raw_write_fd_ = std::exchange(other.raw_write_fd_, -1);
+        is_both_fd_correct_ = std::exchange(other.is_both_fd_correct_, false);
     };
 
     ScopedFD& operator=(ScopedFD&& other) noexcept {
@@ -43,17 +55,36 @@ public:
             CloseAllRawFD();
             raw_read_fd_ = std::exchange(other.raw_read_fd_, -1);
             raw_write_fd_ = std::exchange(other.raw_write_fd_, -1);
+            is_both_fd_correct_ = true;
         }
 
         return *this;
     };
+
+    void TakeNewFD() {
+        CloseAllRawFD();
+        std::array<int, 2> raw_pipe_fd;
+
+        if (pipe(raw_pipe_fd.data()) == -1) {
+            throw YashSystemError("TakeNewFD(): Cannot make new pipe");
+        }
+
+        raw_read_fd_ = raw_pipe_fd[0];
+        raw_write_fd_ = raw_pipe_fd[1];
+        is_both_fd_correct_ = true;
+
+        LOG_DEBUG(std::string("TakeNewFD(): Get current FD: Read=") + std::to_string(raw_read_fd_) +
+                  " Write=" + std::to_string(raw_write_fd_)
+
+        );
+    }
 
     void CloseRawReadFD() {
         if (raw_read_fd_ != -1) {
             is_both_fd_correct_ = false;
 
             if (close(raw_read_fd_) == -1) {
-                throw YashSystemError("Cannot close Read File Descriptor: " +
+                throw YashSystemError("CloseRawReadFD(): Cannot close Read File Descriptor: " +
                                       std::to_string(raw_read_fd_));
             }
             raw_read_fd_ = -1;
@@ -65,7 +96,7 @@ public:
             is_both_fd_correct_ = false;
 
             if (close(raw_write_fd_) == -1) {
-                throw YashSystemError("Cannot close Write File Descriptor: " +
+                throw YashSystemError("CloseRawWriteFD(): Cannot close Write File Descriptor: " +
                                       std::to_string(raw_write_fd_));
             }
             raw_write_fd_ = -1;
@@ -77,14 +108,16 @@ public:
 
         if (raw_read_fd_ != -1) {
             if (close(raw_read_fd_) == -1) {
-                LOG_WARN("Cannot close Read File Descriptor: " + std::to_string(raw_read_fd_));
+                LOG_WARN("CloseAllRawFD(): Cannot close Read File Descriptor: " +
+                         std::to_string(raw_read_fd_));
             }
             raw_read_fd_ = -1;
         }
 
         if (raw_write_fd_ != -1) {
             if (close(raw_write_fd_) == -1) {
-                LOG_WARN("Cannot close Write File Descriptor: " + std::to_string(raw_write_fd_));
+                LOG_WARN("CloseAllRawFD(): Cannot close Write File Descriptor: " +
+                         std::to_string(raw_write_fd_));
             }
             raw_write_fd_ = -1;
         }
@@ -103,17 +136,19 @@ public:
     }
 
     ~ScopedFD() {
-        LOG_DEBUG("ScopedFD - call destructor");
+        LOG_DEBUG("~ScopedFD(): ScopedFD - call destructor");
 
         if (raw_read_fd_ != -1) {
             if (close(raw_read_fd_) == -1) {
-                LOG_WARN("Cannot close Read File Descriptor: " + std::to_string(raw_read_fd_));
+                LOG_WARN("~ScopedFD(): Cannot close Read File Descriptor: " +
+                         std::to_string(raw_read_fd_));
             }
         }
 
         if (raw_write_fd_ != -1) {
             if (close(raw_write_fd_) == -1) {
-                LOG_WARN("Cannot close Write File Descriptor: " + std::to_string(raw_write_fd_));
+                LOG_WARN("~ScopedFD(): Cannot close Write File Descriptor: " +
+                         std::to_string(raw_write_fd_));
             }
         }
     }
