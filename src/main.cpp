@@ -6,6 +6,7 @@
 
 #include "tokenizer/tokenizer.hpp"
 #include "parser/parser.hpp"
+#include "executor/executor.hpp"
 #include "utils/config_parser.hpp"
 #include "utils/logger.hpp"
 #include "utils/yash_error.hpp"
@@ -16,63 +17,33 @@ void SignalHandler(int signal) {
     g_signal_status = signal;
 }
 
-void PrintPipeline(const Pipeline& pipeline) {
-    std::cout << "========================================\n";
-    std::cout << "🌲 AST Pipeline (Commands: " << pipeline.commands.size() << ")\n";
-    std::cout << "========================================\n";
-
-    for (size_t i = 0; i < pipeline.commands.size(); ++i) {
-        const auto& cmd = pipeline.commands[i];
-        std::cout << "  [" << i + 1 << "] Command: ";
-
-        for (const auto& arg : cmd.args) {
-            std::cout << "\033[1;32m" << arg << "\033[0m ";
-        }
-        std::cout << "\n";
-
-        if (!cmd.redirect_in.empty()) {
-            std::cout << "      \033[1;34m< in:\033[0m  " << cmd.redirect_in << "\n";
-        }
-
-        if (!cmd.redirect_out.empty()) {
-            std::cout << "      \033[1;33m> out:\033[0m " << cmd.redirect_out;
-
-            if (cmd.append_out) {
-                std::cout << " (append mode)";
-            }
-
-            std::cout << "\n";
-        }
-    }
-    std::cout << "========================================\n";
-}
-
 int main() {
     std::signal(SIGINT, SignalHandler);
 
     ConfigParser conf_parser;
     YashConfig config = conf_parser.Parse(".yash.conf");
 
-    Logger::Init(config.log_level, "yash.log");
+    Logger::Init(config.log_level, ".yash.log");
     LOG_INFO("yash shell initialized successfully");
 
     for (const auto& warning : config.load_warnings) {
         LOG_WARN(warning);
     }
 
-    LOG_INFO(std::to_string(config.aliases.size()) + " added alias");
+    LOG_INFO(std::to_string(config.aliases.size()) + " aliases loaded");
 
-    for (const auto& i : config.aliases) {
-        std::string msg = std::string("Loaded alias ") + "key= " + i.first + ", value= " + i.second;
-        LOG_DEBUG(msg);
-    };
+    for (const auto& [key, value] : config.aliases) {
+        LOG_DEBUG("Loaded alias: " + key + " -> " += value);
+    }
 
-    std::cout << "yash (Parser AST Demo Mode)\n";
+    Executor executor;
+
+    std::cout << "yash (Execution Mode)\n";
     std::cout << "Type 'exit' to quit or Ctrl+C to stop.\n";
 
     int last_exit_status = ExitCode::SUCCESS;
-
     std::string line;
+
     while (true) {
         if (g_signal_status == SIGINT) {
             std::cout << "\nbye!\n";
@@ -89,29 +60,37 @@ int main() {
         }
 
         LOG_DEBUG("User input: " + line);
-
         std::stringstream ss{line};
+
         try {
             Tokenizer tokenizer{&ss};
             Parser parser{tokenizer};
 
             if (auto pipeline = parser.ParsePipeline()) {
-                PrintPipeline(*pipeline);
-                last_exit_status = ExitCode::SUCCESS;
+                last_exit_status = executor.RunPipeline(*pipeline);
             }
 
         } catch (const YashSyntaxError& e) {
             std::cerr << e.what() << '\n';
+
             last_exit_status = e.GetCode();
-            LOG_WARN(std::string(e.what()));
+            LOG_WARN(std::string("Syntax error: ") + e.what());
+
+        } catch (const YashCommandNotFoundError& e) {
+            std::cerr << e.what() << '\n';
+
+            last_exit_status = e.GetCode();
+            LOG_WARN(std::string("Command not found: ") + e.what());
 
         } catch (const YashError& e) {
             std::cerr << e.what() << '\n';
+
             last_exit_status = e.GetCode();
             LOG_WARN(std::string("Execution error: ") + e.what());
 
         } catch (const std::exception& e) {
             std::cerr << "yash: unexpected fatal error: " << e.what() << '\n';
+
             last_exit_status = ExitCode::GENERAL_FAILURE;
             LOG_FATAL(std::string("Fatal exception: ") + e.what());
         }

@@ -7,11 +7,13 @@ RUN apt-get update && \
 WORKDIR /src
 COPY . .
 
-RUN cmake -B build -DCMAKE_BUILD_TYPE=Release  && \ 
+RUN cmake -B build -DCMAKE_BUILD_TYPE=Release  && \
     cmake --build build --config Release --parallel   
 
 FROM ubuntu:24.04
 WORKDIR /app
+
+LABEL org.opencontainers.image.description="yash — a high-performance Unix-like shell in C++ with a modular design and state machine tokenizer."
 
 COPY --from=builder /src/build/src/yash .
 

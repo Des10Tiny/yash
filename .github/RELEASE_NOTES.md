@@ -1,19 +1,18 @@
-# Release v0.3.0: Core Infrastructure, Logging & Configuration
+# Release v0.4.0: Execution Engine & Process Pipelining
 
 ## Summary
 
-Built the foundational system infrastructure required for the upcoming execution engine. This release introduces centralized error handling, safe OS resource management, and an extensible configuration system to make `yash` robust and production-ready.
+This is a major milestone for `yash`. Transitioning from a purely analytical AST parser, this release introduces a fully functional Execution Engine. `yash` can now natively interact with the UNIX kernel to spawn processes, manage execution environments, and chain complex pipelines without resource leaks or deadlocks.
 
 ## 🚀 Added
 
-- **Configuration System:** Implemented `ConfigParser` to read settings from `~/.yash.conf`. Currently supports dynamic `loglevel` and has a scalable architecture for future aliases and UI settings.
-- **System Logger:** Added a thread-safe, static `Logger` class. It safely records runtime events, warnings, and PIDs to `yash.log` without polluting the user's terminal.
-- **Resource Management (RAII):** Introduced `ScopedFD`, a secure C++ wrapper for POSIX file descriptors to prevent pipe leaks during `fork()` and `exec()` operations.
-- **Custom Exception Hierarchy:** Replaced generic `std::runtime_error` with POSIX-compliant custom exceptions (`YashError`, `YashSyntaxError`, `YashSystemError`, etc.) for accurate exit status codes (0, 1, 2, 127).
-- Added comprehensive GTest suite for the configuration parser and RAII wrappers.
+- **Execution Engine:** Implemented the `Executor` class responsible for traversing the AST and executing external binaries via `fork()` and `execvp()`.
+- **Relay-Race Pipelining:** Engineered a highly optimized pipeline architecture (`ls | cat | grep`) that maintains only two active file descriptors at any time. This prevents FD exhaustion and deadlocks, allowing pipelines of infinite length.
+- **POSIX Exit Codes Mapping:** Implemented accurate translation of kernel signals and process exit statuses (e.g., `127` for Command Not Found, `126` for Permission Denied, `128+N` for fatal signals) using `waitpid` bitwise macros.
+- **Stress & Load Testing:** Added an aggressive testing suite that runs pipeline stress tests (100+ chained pipes) and speed execution tests (1000 consecutive commands).
 
 ## 🔧 Changed
 
-- **REPL Refactoring:** `main.cpp` now correctly initializes the logging and configuration subsystems before starting the interactive loop.
-- **Error Propagation:** The parser and tokenizer now throw specific `YashSyntaxError` exceptions instead of generic runtime errors, improving debuggability.
-- Log files now use append mode (`std::ios::app`) with clear visual session dividers instead of overwriting previous crash data.
+- **REPL Integration:** Replaced the AST demo output in `main.cpp` with active command execution. The shell now acts as a true interactive prompt.
+- **Child Process Safety:** Enforced `_Exit()` calls within forked processes to prevent C++ exception leaks and "zombie shell" cloning during execution failures.
+- **Sanitizer Infrastructure:** Overhauled the `CMakeLists.txt` build system to support seamless CI/CD integration with AddressSanitizer (ASan) and UndefinedBehaviorSanitizer (UBSan), guaranteeing(but that's not for sure, it's c++) zero memory or descriptor leaks during execution.

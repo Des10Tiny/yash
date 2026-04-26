@@ -11,35 +11,76 @@ permissions:
   contents: read
 
 jobs:
-  build-debug:
-    name: Build Debug on ${{ matrix.os }}
+  test-basic:
+    name: Test ${{ matrix.build_type }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
+        build_type: [Debug, Release]
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Configure CMake (Debug)
-        run: cmake -B build_debug -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_TESTS=ON -DBUILD_TESTS_SANITIZED=OFF
 
-      - name: Build Project
-        run: cmake --build build_debug --config Debug --parallel
+      - name: Build
+        run: cmake --build build --config ${{ matrix.build_type }} --parallel
 
-      - name: Upload Test Artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: test-binaries-${{ matrix.os }}
-          path: build_debug/
-          retention-days: 1
+      - name: Run Tests
+        working-directory: build
 
-  call-tests:
-    needs: build-debug
-    uses: ./.github/workflows/tests.yml
+        run: ctest --output-on-failure -C ${{ matrix.build_type }}
+
+  test-sanitized:
+    name: Sanitized Tests (${{ matrix.build_type }}) on ${{ matrix.os }}
+    needs: test-basic
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        build_type: [Debug, Release]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_TESTS=OFF -DBUILD_TESTS_SANITIZED=ON
+
+      - name: Build
+        run: cmake --build build --config ${{ matrix.build_type }} --parallel
+
+      - name: Run Tests
+        working-directory: build
+
+        run: ctest --output-on-failure -C ${{ matrix.build_type }}
+
+  all-possible-test:
+    name: All Tests on (${{ matrix.build_type }}) on ${{ matrix.os }}
+    needs: test-basic
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        build_type: [Debug, Release]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_TESTS=ON -DBUILD_TESTS_SANITIZED=ON
+
+      - name: Build
+        run: cmake --build build --config ${{ matrix.build_type }} --parallel
+
+      - name: Run Tests
+        working-directory: build
+
+        run: ctest --output-on-failure
 
   call-release:
-    needs: call-tests
+    needs: all-possible-test
     if: startsWith(github.ref, 'refs/tags/')
     permissions:
       contents: write
