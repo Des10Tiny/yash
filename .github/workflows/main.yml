@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   test-basic:
-    name: Test ${{ matrix.build_type }} on ${{ matrix.os }}
+    name: Test |${{ matrix.build_type }}| on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -34,7 +34,7 @@ jobs:
         run: ctest --output-on-failure -C ${{ matrix.build_type }}
 
   test-sanitized:
-    name: Sanitized Tests (${{ matrix.build_type }}) on ${{ matrix.os }}
+    name: Sanitized Tests |${{ matrix.build_type }}| on ${{ matrix.os }}
     needs: test-basic
     runs-on: ${{ matrix.os }}
     strategy:
@@ -57,8 +57,8 @@ jobs:
         run: ctest --output-on-failure -C ${{ matrix.build_type }}
 
   all-possible-test:
-    name: All Tests on (${{ matrix.build_type }}) on ${{ matrix.os }}
-    needs: test-basic
+    name: All Tests on |${{ matrix.build_type }}| on ${{ matrix.os }}
+    needs: [test-basic, test-sanitized]
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -80,7 +80,7 @@ jobs:
         run: ctest --output-on-failure
 
   call-release:
-    needs: all-possible-test
+    needs: [test-basic, test-sanitized, all-possible-test]
     if: startsWith(github.ref, 'refs/tags/')
     permissions:
       contents: write
