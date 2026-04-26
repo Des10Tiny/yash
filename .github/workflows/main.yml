@@ -34,7 +34,7 @@ jobs:
         run: ctest --output-on-failure -C ${{ matrix.build_type }}
 
   test-sanitized:
-    name: Sanitized Tests on ${{ matrix.os }}
+    name: Sanitized Tests (${{ matrix.build_type }}) on ${{ matrix.os }}
     needs: test-basic
     runs-on: ${{ matrix.os }}
     strategy:
@@ -57,7 +57,7 @@ jobs:
         run: ctest --output-on-failure -C ${{ matrix.build_type }}
 
   all-possible-test:
-    name: All Tests on ${{ matrix.os }}
+    name: All Tests on (${{ matrix.build_type }}) on ${{ matrix.os }}
     needs: test-basic
     runs-on: ${{ matrix.os }}
     strategy:
@@ -77,7 +77,7 @@ jobs:
       - name: Run Tests
         working-directory: build
 
-        run: ctest --output-on-failure -C ${{ matrix.build_type }}
+        run: ctest --output-on-failure
 
   call-release:
     needs: all-possible-test
