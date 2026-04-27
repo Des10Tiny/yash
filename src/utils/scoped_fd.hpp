@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <format>
 #include <string>
 #include <unistd.h>
 #include <utility>
@@ -86,8 +87,10 @@ public:
 
             if (close(raw_read_fd_) == -1) {
                 throw YashSystemError(
-                    "CloseRawReadFD(): Cannot close Read File Descriptor: " +
-                    std::to_string(raw_read_fd_)
+                    std::format(
+                        "CloseRawReadFD(): Cannot close Read File Descriptor read_fd={}",
+                        raw_read_fd_
+                    )
                 );
             }
             raw_read_fd_ = -1;
@@ -100,8 +103,10 @@ public:
 
             if (close(raw_write_fd_) == -1) {
                 throw YashSystemError(
-                    "CloseRawWriteFD(): Cannot close Write File Descriptor: " +
-                    std::to_string(raw_write_fd_)
+                    std::format(
+                        "CloseRawWriteFD(): Cannot close Write File Descriptor write_fd={}",
+                        raw_write_fd_
+                    )
                 );
             }
             raw_write_fd_ = -1;
