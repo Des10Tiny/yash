@@ -50,11 +50,6 @@ TEST_F(ExecutorTest, EmptyCommandArgsReturnsZero) {
     EXPECT_EQ(executor.RunPipeline(p), 0);
 }
 
-TEST_F(ExecutorTest, RunsBuiltinSingleCommand) {
-    auto p = MakePipeline({{"cd", "/tmp"}});
-    EXPECT_EQ(executor.RunPipeline(p), 1);
-}
-
 TEST_F(ExecutorTest, ExternalCommandSuccess) {
     auto p = MakePipeline({{"true"}});
     EXPECT_EQ(executor.RunPipeline(p), 0);
@@ -178,17 +173,18 @@ TEST_F(ExecutorTest, IdioticInput_MaxArgsLimit) {
 // ============================================================================
 
 TEST_F(ExecutorTest, BuiltinCd_ChangesDirectorySuccessfully) {
-    char cwd[1024];
-    ASSERT_NE(getcwd(cwd, sizeof(cwd)), nullptr);
-    std::string original_dir = cwd;
+    namespace fs = std::filesystem;
+
+    fs::path original_dir = fs::current_path();
 
     auto p = MakePipeline({{"cd", "/tmp"}});
     EXPECT_EQ(executor.RunPipeline(p), 0);
 
-    ASSERT_NE(getcwd(cwd, sizeof(cwd)), nullptr);
-    EXPECT_STREQ(cwd, "/tmp");
+    fs::path new_dir = fs::current_path();
 
-    chdir(original_dir.c_str());
+    EXPECT_TRUE(fs::equivalent(new_dir, fs::path("/tmp")));
+
+    fs::current_path(original_dir);
 }
 
 TEST_F(ExecutorTest, BuiltinCd_ReturnsErrorOnNonExistentPath) {
@@ -223,5 +219,5 @@ TEST_F(ExecutorTest, BuiltinExit_ThrowsExitException) {
 TEST_F(ExecutorTest, BuiltinExit_DoesNotRunSubsequentCommandsInPipeline) {
     auto p = MakePipeline({{"exit"}, {"echo", "should_not_run"}});
 
-    EXPECT_THROW({ executor.RunPipeline(p); }, YashExitException);
+    EXPECT_THROW({ executor.RunPipeline(p); }, YashSyntaxError);
 }

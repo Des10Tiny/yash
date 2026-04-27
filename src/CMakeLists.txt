@@ -12,7 +12,7 @@ target_include_directories(yash_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 if(MSVC)
     target_compile_options(yash_lib PRIVATE /W4 /WX)
 else()
-    target_compile_options(yash_lib PRIVATE -Wall -Wextra -Werror)
+    target_compile_options(yash_lib PRIVATE -Wall -Wextra -Werror -Wimplicit-fallthrough)
 endif()
 
 
