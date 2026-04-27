@@ -1,5 +1,7 @@
 #include <cerrno>
+#include <cstddef>
 #include <cstdlib>
+#include <exception>
 #include <iostream>
 #include <string>
 #include <sys/wait.h>
@@ -23,7 +25,12 @@ int Executor::RunPipeline(Pipeline& pipeline) {
     }
 
     if (auto it_is_in_builtins = builtins_.find(pipeline.commands[0].args[0]);
-        it_is_in_builtins != builtins_.end() && pipeline.commands.size() == 1) {
+        it_is_in_builtins != builtins_.end()) {
+        if (pipeline.commands.size() > 1) {
+            // FIXME: Need remove Syntax Error
+            throw YashSyntaxError("builtins cannot be used in pipelines");
+        }
+
         LOG_DEBUG("Command: \'{}\' find in builtins", it_is_in_builtins->first);
         return it_is_in_builtins->second(pipeline.commands[0]);
 
@@ -100,41 +107,9 @@ int Executor::RunPipeline(Pipeline& pipeline) {
 
                 prev_read_fd.CloseRawReadFD();
                 std::vector<char*> char_vector = CharFromVectorHandler(i.args);
+
                 execvp(char_vector[0], char_vector.data());
-
-                switch (errno) {
-                case EACCES: {
-                    LOG_DEBUG(
-                        "Command \'{}\'. Permission denied", char_vector[0]
-
-                    );
-
-                    std::cerr << std::string("Command \'") + char_vector[0] +
-                                     "\'. Permission denied "
-                              << '\n';
-
-                    std::_Exit(ExitCode::PERMISSION_DENIED);
-                }
-
-                case ENOENT: {
-                    LOG_DEBUG(
-                        "Command \'{}\' not found", char_vector[0]
-
-                    );
-                    std::cerr << std::string("Command \'") + char_vector[0] + "\' not found"
-                              << '\n';
-                    std::_Exit(ExitCode::COMMAND_NOT_FOUND);
-                }
-
-                default: {
-                    LOG_WARN(
-                        "Command \'{}\' execution failed", char_vector[0]
-
-                    );
-                    std::cerr << "yash: execution failed: " << char_vector[0] << '\n';
-                    std::_Exit(ExitCode::GENERAL_FAILURE);
-                }
-                }
+                HandleExecFailure(char_vector[0], errno);
 
             } else {
                 LOG_DEBUG(
@@ -191,4 +166,108 @@ int Executor::WaitForAllChildren(const std::vector<pid_t>& all_children_to_wait)
     }
 
     return last_status;
+}
+
+[[noreturn]] void Executor::HandleExecFailure(const std::string& cmd_name, int err_code) {
+    LOG_DEBUG("execvp failed for '{}', errno: {}", cmd_name, err_code);
+
+    std::unique_ptr<YashError> error;
+
+    switch (err_code) {
+    case EACCES: {
+        error = std::make_unique<YashPermissionError>(cmd_name);
+        LOG_DEBUG(
+            "Command \'{}\'. Permission denied", cmd_name
+
+        );
+        break;
+    }
+    case ENOENT: {
+        error = std::make_unique<YashCommandNotFoundError>(cmd_name);
+        LOG_DEBUG(
+            "Command \'{}\' not found", cmd_name
+
+        );
+        break;
+    }
+    default: {
+        error =
+            std::make_unique<YashSystemError>(std::format("execution failed for \'{}\'", cmd_name));
+        LOG_WARN(
+            "Command \'{}\' execution failed", cmd_name
+
+        );
+        break;
+    }
+    }
+
+    std::cerr << error->what() << '\n';
+
+    std::_Exit(error->GetCode());
+}
+
+int Executor::RunChangeDirectory(const Command& cmd) {
+    // FIXME: Need remake this func
+    try {
+        int exit_code = ExitCode::SUCCESS;
+
+        if (cmd.args.size() == 1) {
+            char* home_value = getenv("HOME");
+
+            if (!home_value) {
+                throw YashBuiltinError("cd: HOME not set");
+            }
+
+            int status_chdir = chdir(home_value);
+
+            if (status_chdir == -1) {
+                throw YashBuiltinError(
+                    std::format("cd: {}: {}", cmd.args[1], std::strerror(errno))
+                );
+            }
+
+        } else if (cmd.args.size() == 2) {
+            if (chdir(cmd.args[1].c_str()) == -1) {
+                throw YashBuiltinError(
+                    std::format("cd: {}: {}", cmd.args[1], std::strerror(errno))
+                );
+            }
+
+        } else {
+            throw YashBuiltinError("cd: too many arguments");
+        }
+
+        return exit_code;
+    }
+
+    catch (const YashError& e) {
+        std::cerr << e.what() << '\n';
+        return e.GetCode();
+    } catch (const std::exception& e) {
+        LOG_FATAL(
+            "cd: critical failure"
+
+        );
+        return ExitCode::CRITICAL_FAILURE;
+    }
+
+    return 1;
+}
+
+[[noreturn]] int Executor::RunExit(const Command& cmd) {
+    if (cmd.args.size() == 1) {
+        throw YashExitException(0);
+
+    } else if (cmd.args.size() == 2) {
+        try {
+            int code = std::stoi(cmd.args[1]);
+            throw YashExitException(code);
+        } catch (const std::invalid_argument& e) {
+            throw YashBuiltinError(std::format("exit: {}: numeric argument required", cmd.args[1]));
+        } catch (const std::out_of_range& e) {
+            throw YashBuiltinError(std::format("exit: {}: number out of range", cmd.args[1]));
+        }
+    }
+
+    throw YashBuiltinError("exit: too many arguments");
 }

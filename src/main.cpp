@@ -51,7 +51,7 @@ int main() {
         }
 
         std::cout << "yash> ";
-        if (!std::getline(std::cin, line) || line == "exit") {
+        if (!std::getline(std::cin, line)) {
             break;
         }
 
@@ -82,6 +82,9 @@ int main() {
             last_exit_status = e.GetCode();
             LOG_WARN("Command not found: {}", e.what());
 
+        } catch (const YashExitException& e) {
+            last_exit_status = e.GetCode();
+            break;
         } catch (const YashError& e) {
             std::cerr << e.what() << '\n';
 
