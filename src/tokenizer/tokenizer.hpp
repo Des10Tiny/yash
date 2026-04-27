@@ -36,7 +36,7 @@ class Tokenizer {
 public:
     Tokenizer(std::istream* in);
 
-    bool IsEnd();
+    [[nodiscard]] bool IsEnd() const;
 
     void Next();
 

@@ -131,15 +131,15 @@ public:
         }
     }
 
-    int GetRawReadFD() const {
+    [[nodiscard]] int GetRawReadFD() const {
         return raw_read_fd_;
     }
 
-    int GetRawWriteFD() const {
+    [[nodiscard]] int GetRawWriteFD() const {
         return raw_write_fd_;
     }
 
-    bool IsBothCorrect() const {
+    [[nodiscard]] bool IsBothCorrect() const {
         return is_both_fd_correct_;
     }
 
