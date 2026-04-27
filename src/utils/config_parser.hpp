@@ -1,9 +1,9 @@
 #pragma once
 
+#include "logger.hpp"
+#include <functional>
 #include <string>
 #include <unordered_map>
-#include <functional>
-#include "logger.hpp"
 
 struct YashConfig {
     LogLevel log_level = LogLevel::NONE;

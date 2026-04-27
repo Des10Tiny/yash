@@ -19,9 +19,7 @@ std::optional<Pipeline> Parser::ParsePipeline() {
         pipeline.commands.push_back(cmd.value());
 
         while (!tokenizer_.IsEnd()) {
-
             if (std::holds_alternative<PipeToken>(tokenizer_.GetToken())) {
-
                 tokenizer_.Next();
                 std::optional<Command> next_cmd = ParseCommand();
 
@@ -46,7 +44,6 @@ std::optional<Command> Parser::ParseCommand() {
 
     while (!tokenizer_.IsEnd() && (std::holds_alternative<WordToken>(tokenizer_.GetToken()) ||
                                    std::holds_alternative<RedirectToken>(tokenizer_.GetToken()))) {
-
         Token curr_token = tokenizer_.GetToken();
 
         if (WordToken* word_token = std::get_if<WordToken>(&curr_token)) {

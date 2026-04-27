@@ -1,7 +1,7 @@
 #include "logger.hpp"
-#include <iostream>
 #include <chrono>
 #include <iomanip>
+#include <iostream>
 #include <sstream>
 #include <unistd.h>
 
@@ -41,21 +41,21 @@ void Logger::Write(LogLevel level, const std::string& msg) {
 
 std::string Logger::LevelToString(LogLevel level) {
     switch (level) {
-        case LogLevel::FATAL: {
-            return "FATAL";
-        }
-        case LogLevel::WARNING: {
-            return "WARN";
-        }
-        case LogLevel::INFO: {
-            return "INFO";
-        }
-        case LogLevel::DEBUG: {
-            return "DEBUG";
-        }
-        default: {
-            return "UNKNOWN";
-        }
+    case LogLevel::FATAL: {
+        return "FATAL";
+    }
+    case LogLevel::WARNING: {
+        return "WARN";
+    }
+    case LogLevel::INFO: {
+        return "INFO";
+    }
+    case LogLevel::DEBUG: {
+        return "DEBUG";
+    }
+    default: {
+        return "UNKNOWN";
+    }
     }
 }
 

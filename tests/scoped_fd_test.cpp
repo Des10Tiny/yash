@@ -1,5 +1,5 @@
-#include <gtest/gtest.h>
 #include <fcntl.h>
+#include <gtest/gtest.h>
 #include <unistd.h>
 
 #include "utils/scoped_fd.hpp"

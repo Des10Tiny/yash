@@ -1,16 +1,16 @@
-#include <unistd.h>
 #include <cerrno>
+#include <cstdlib>
 #include <iostream>
 #include <string>
-#include <vector>
 #include <sys/wait.h>
-#include <cstdlib>
+#include <unistd.h>
+#include <vector>
 
 #include "executor.hpp"
 #include "parser/parser.hpp"
 #include "utils/logger.hpp"
-#include "utils/yash_error.hpp"
 #include "utils/scoped_fd.hpp"
+#include "utils/yash_error.hpp"
 
 Executor::Executor() {
     builtins_["cd"] = [this](const Command& cmd) { return RunChangeDirectory(cmd); };
@@ -24,7 +24,6 @@ int Executor::RunPipeline(Pipeline& pipeline) {
 
     if (auto it_is_in_builtins = builtins_.find(pipeline.commands[0].args[0]);
         it_is_in_builtins != builtins_.end() && pipeline.commands.size() == 1) {
-
         LOG_DEBUG("Command: \'{}\' find in builtins", it_is_in_builtins->first);
         return it_is_in_builtins->second(pipeline.commands[0]);
 
@@ -104,37 +103,37 @@ int Executor::RunPipeline(Pipeline& pipeline) {
                 execvp(char_vector[0], char_vector.data());
 
                 switch (errno) {
-                    case EACCES: {
-                        LOG_DEBUG(
-                            "Command \'{}\'. Permission denied", char_vector[0]
+                case EACCES: {
+                    LOG_DEBUG(
+                        "Command \'{}\'. Permission denied", char_vector[0]
 
-                        );
+                    );
 
-                        std::cerr << std::string("Command \'") + char_vector[0] +
-                                         "\'. Permission denied "
-                                  << '\n';
+                    std::cerr << std::string("Command \'") + char_vector[0] +
+                                     "\'. Permission denied "
+                              << '\n';
 
-                        std::_Exit(ExitCode::PERMISSION_DENIED);
-                    }
+                    std::_Exit(ExitCode::PERMISSION_DENIED);
+                }
 
-                    case ENOENT: {
-                        LOG_DEBUG(
-                            "Command \'{}\' not found", char_vector[0]
+                case ENOENT: {
+                    LOG_DEBUG(
+                        "Command \'{}\' not found", char_vector[0]
 
-                        );
-                        std::cerr << std::string("Command \'") + char_vector[0] + "\' not found"
-                                  << '\n';
-                        std::_Exit(ExitCode::COMMAND_NOT_FOUND);
-                    }
+                    );
+                    std::cerr << std::string("Command \'") + char_vector[0] + "\' not found"
+                              << '\n';
+                    std::_Exit(ExitCode::COMMAND_NOT_FOUND);
+                }
 
-                    default: {
-                        LOG_WARN(
-                            "Command \'{}\' execution failed", char_vector[0]
+                default: {
+                    LOG_WARN(
+                        "Command \'{}\' execution failed", char_vector[0]
 
-                        );
-                        std::cerr << "yash: execution failed: " << char_vector[0] << '\n';
-                        std::_Exit(ExitCode::GENERAL_FAILURE);
-                    }
+                    );
+                    std::cerr << "yash: execution failed: " << char_vector[0] << '\n';
+                    std::_Exit(ExitCode::GENERAL_FAILURE);
+                }
                 }
 
             } else {

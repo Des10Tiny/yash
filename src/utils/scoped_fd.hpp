@@ -1,9 +1,9 @@
 #pragma once
 
-#include <unistd.h>
-#include <string>
-#include <utility>
 #include <array>
+#include <string>
+#include <unistd.h>
+#include <utility>
 
 #include "utils/logger.hpp"
 #include "utils/yash_error.hpp"
@@ -38,7 +38,8 @@ public:
     };
 
     ScopedFD(int raw_read_fd, int raw_write_fd)
-        : raw_read_fd_(raw_read_fd), raw_write_fd_(raw_write_fd) {
+        : raw_read_fd_(raw_read_fd)
+        , raw_write_fd_(raw_write_fd) {
     }
 
     ScopedFD(const ScopedFD& other) = delete;

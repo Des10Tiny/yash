@@ -63,7 +63,6 @@ std::string ExtractValue(std::istream* data) {
         }
 
         else if (state == State::IN_DOUBLE) {
-
             if (curr_char == '\"') {
                 state = State::NORMAL;
             } else {
@@ -74,9 +73,10 @@ std::string ExtractValue(std::istream* data) {
 
     return result_value;
 }
-}  // namespace
+} // namespace
 
-Tokenizer::Tokenizer(std::istream* in) : original_data_(in) {
+Tokenizer::Tokenizer(std::istream* in)
+    : original_data_(in) {
     Next();
 }
 

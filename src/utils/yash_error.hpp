@@ -1,24 +1,25 @@
 #pragma once
 
+#include <cstdint>
 #include <stdexcept>
 #include <string>
-#include <cstdint>
 
 // Standard shell exit codes
 enum ExitCode : std::uint8_t {
-    SUCCESS = 0,              // Execution completed successfully
-    GENERAL_FAILURE = 1,      // Catchall for general errors (e.g., cd to wrong dir)
-    SYNTAX_ERROR = 2,         // Misuse of shell builtins or syntax error
-    PERMISSION_DENIED = 126,  // Command invoked cannot execute (bad permissions)
-    COMMAND_NOT_FOUND = 127,  // Command not found in PATH
-    FATAL_SIGNAL_BASE = 128   // Base code for fatal signals (e.g., 128 + 2 for SIGINT)
+    SUCCESS = 0,             // Execution completed successfully
+    GENERAL_FAILURE = 1,     // Catchall for general errors (e.g., cd to wrong dir)
+    SYNTAX_ERROR = 2,        // Misuse of shell builtins or syntax error
+    PERMISSION_DENIED = 126, // Command invoked cannot execute (bad permissions)
+    COMMAND_NOT_FOUND = 127, // Command not found in PATH
+    FATAL_SIGNAL_BASE = 128  // Base code for fatal signals (e.g., 128 + 2 for SIGINT)
 };
 
 // Base class for all shell-specific runtime failures
 class YashError : public std::runtime_error {
 public:
     explicit YashError(const std::string& message, int exit_code = 1)
-        : std::runtime_error(message), exit_code_(exit_code) {
+        : std::runtime_error(message)
+        , exit_code_(exit_code) {
     }
 
     [[nodiscard]] int GetCode() const noexcept {
