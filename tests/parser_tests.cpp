@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 #include <sstream>
-#include <stdexcept>
 
 #include "parser/parser.hpp"
 #include "utils/yash_error.hpp"
