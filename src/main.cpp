@@ -27,13 +27,13 @@ int main() {
     LOG_INFO("yash shell initialized successfully");
 
     for (const auto& warning : config.load_warnings) {
-        LOG_WARN(warning);
+        LOG_WARN("{}", warning);
     }
 
-    LOG_INFO(std::to_string(config.aliases.size()) + " aliases loaded");
+    LOG_INFO("{} aliases loaded", config.aliases.size());
 
     for (const auto& [key, value] : config.aliases) {
-        LOG_DEBUG("Loaded alias: " + key + " -> " += value);
+        LOG_DEBUG("Loaded alias: {} -> {}", key, value);
     }
 
     Executor executor;
@@ -59,7 +59,7 @@ int main() {
             continue;
         }
 
-        LOG_DEBUG("User input: " + line);
+        LOG_DEBUG("User input: {}", line);
         std::stringstream ss{line};
 
         try {
@@ -74,25 +74,25 @@ int main() {
             std::cerr << e.what() << '\n';
 
             last_exit_status = e.GetCode();
-            LOG_WARN(std::string("Syntax error: ") + e.what());
+            LOG_WARN("Syntax error: {}", e.what());
 
         } catch (const YashCommandNotFoundError& e) {
             std::cerr << e.what() << '\n';
 
             last_exit_status = e.GetCode();
-            LOG_WARN(std::string("Command not found: ") + e.what());
+            LOG_WARN("Command not found: {}", e.what());
 
         } catch (const YashError& e) {
             std::cerr << e.what() << '\n';
 
             last_exit_status = e.GetCode();
-            LOG_WARN(std::string("Execution error: ") + e.what());
+            LOG_WARN("Execution error: {}", e.what());
 
         } catch (const std::exception& e) {
             std::cerr << "yash: unexpected fatal error: " << e.what() << '\n';
 
             last_exit_status = ExitCode::GENERAL_FAILURE;
-            LOG_FATAL(std::string("Fatal exception: ") + e.what());
+            LOG_FATAL("Fatal exception: {}", e.what());
         }
     }
 

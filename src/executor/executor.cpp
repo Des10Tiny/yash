@@ -25,7 +25,7 @@ int Executor::RunPipeline(Pipeline& pipeline) {
     if (auto it_is_in_builtins = builtins_.find(pipeline.commands[0].args[0]);
         it_is_in_builtins != builtins_.end() && pipeline.commands.size() == 1) {
 
-        LOG_DEBUG("Command: \'" + it_is_in_builtins->first + "\' find in builtins");
+        LOG_DEBUG("Command: \'{}\' find in builtins", it_is_in_builtins->first);
         return it_is_in_builtins->second(pipeline.commands[0]);
 
     } else {
@@ -40,20 +40,19 @@ int Executor::RunPipeline(Pipeline& pipeline) {
             ScopedFD pipe{true};
 
             if (curr_size != size_of_pipline - 1) {
-                LOG_DEBUG(std::string("Executor(): Ask new fd")
+                LOG_DEBUG(
+                    "Executor(): Ask new fd"
 
                 );
                 pipe.TakeNewFD();
-                LOG_DEBUG(std::string("Get new fd") +
-                          "Read=" + std::to_string(pipe.GetRawReadFD()) +
-                          " Write=" + std::to_string(pipe.GetRawWriteFD())
+                LOG_DEBUG(
+                    "Get new fd Read={} Write={}", pipe.GetRawReadFD(), pipe.GetRawWriteFD()
 
                 );
             }
 
-            LOG_DEBUG(std::string("Make new pipe ") +
-                      "Read=" + std::to_string(pipe.GetRawReadFD()) +
-                      " Write=" + std::to_string(pipe.GetRawWriteFD())
+            LOG_DEBUG(
+                "Make new pipe Read={} Write={}", pipe.GetRawReadFD(), pipe.GetRawWriteFD()
 
             );
 
@@ -72,7 +71,8 @@ int Executor::RunPipeline(Pipeline& pipeline) {
                 if (prev_read_fd.GetRawReadFD() != -1) {
                     int dup2_read_status = dup2(prev_read_fd.GetRawReadFD(), STDIN_FILENO);
 
-                    LOG_DEBUG("Child made dup2 for read"
+                    LOG_DEBUG(
+                        "Child made dup2 for read"
 
                     );
 
@@ -83,7 +83,8 @@ int Executor::RunPipeline(Pipeline& pipeline) {
 
                 if (pipe.IsBothCorrect()) {
                     int dup2_write_status = dup2(pipe.GetRawWriteFD(), STDOUT_FILENO);
-                    LOG_DEBUG("Child made dup2 for write"
+                    LOG_DEBUG(
+                        "Child made dup2 for write"
 
                     );
 
@@ -93,7 +94,8 @@ int Executor::RunPipeline(Pipeline& pipeline) {
                 }
 
                 pipe.CloseAllRawFD();
-                LOG_DEBUG("Child close all parent pipe"
+                LOG_DEBUG(
+                    "Child close all parent pipe"
 
                 );
 
@@ -104,7 +106,7 @@ int Executor::RunPipeline(Pipeline& pipeline) {
                 switch (errno) {
                     case EACCES: {
                         LOG_DEBUG(
-                            std::string("Command \'") + char_vector[0] + "\'. Permission denied"
+                            "Command \'{}\'. Permission denied", char_vector[0]
 
                         );
 
@@ -116,7 +118,8 @@ int Executor::RunPipeline(Pipeline& pipeline) {
                     }
 
                     case ENOENT: {
-                        LOG_DEBUG(std::string("Command \'") + char_vector[0] + "\' not found"
+                        LOG_DEBUG(
+                            "Command \'{}\' not found", char_vector[0]
 
                         );
                         std::cerr << std::string("Command \'") + char_vector[0] + "\' not found"
@@ -125,7 +128,8 @@ int Executor::RunPipeline(Pipeline& pipeline) {
                     }
 
                     default: {
-                        LOG_WARN(std::string("Command \'") + char_vector[0] + "\' execution failed"
+                        LOG_WARN(
+                            "Command \'{}\' execution failed", char_vector[0]
 
                         );
                         std::cerr << "yash: execution failed: " << char_vector[0] << '\n';
@@ -134,15 +138,17 @@ int Executor::RunPipeline(Pipeline& pipeline) {
                 }
 
             } else {
-                LOG_DEBUG(std::string("Prev read FD before move Read=") +
-                          std::to_string(prev_read_fd.GetRawReadFD()) +
-                          " Write=" + std::to_string(prev_read_fd.GetRawWriteFD())
+                LOG_DEBUG(
+                    "Prev read FD before move Read={} Write={}",
+                    prev_read_fd.GetRawReadFD(),
+                    prev_read_fd.GetRawWriteFD()
 
                 );
                 prev_read_fd = std::move(pipe);
-                LOG_DEBUG(std::string("Prev read FD after move Read=") +
-                          std::to_string(prev_read_fd.GetRawReadFD()) +
-                          " Write=" + std::to_string(prev_read_fd.GetRawWriteFD())
+                LOG_DEBUG(
+                    "Prev read FD after move Read={} Write={}",
+                    prev_read_fd.GetRawReadFD(),
+                    prev_read_fd.GetRawWriteFD()
 
                 );
 
@@ -170,15 +176,15 @@ int Executor::WaitForAllChildren(const std::vector<pid_t>& all_children_to_wait)
         }
 
         if (WIFEXITED(status)) {
-            LOG_DEBUG("Process pid=" + std::to_string(curr_child_pid) +
-                      " ended with the code: " + std::to_string(WEXITSTATUS(status))
+            LOG_DEBUG(
+                "Process pid={} ended with the code={}", curr_child_pid, WEXITSTATUS(status)
 
             );
 
             last_status = WEXITSTATUS(status);
         } else if (WIFSIGNALED(status)) {
-            LOG_WARN("Process pid= " + std::to_string(curr_child_pid) +
-                     " was killed by a signal: " + std::to_string(WTERMSIG(status))
+            LOG_WARN(
+                "Process pid={} was killed by a signal={} ", curr_child_pid, WTERMSIG(status)
 
             );
             last_status = 128 + WTERMSIG(status);

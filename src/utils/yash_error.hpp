@@ -49,8 +49,9 @@ public:
 class YashPermissionError final : public YashError {
 public:
     explicit YashPermissionError(const std::string& command)
-        : YashError("yash: command found but permission denied: " + command,
-                    ExitCode::PERMISSION_DENIED) {
+        : YashError(
+              "yash: command found but permission denied: " + command, ExitCode::PERMISSION_DENIED
+          ) {
     }
 };
 

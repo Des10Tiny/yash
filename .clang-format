@@ -8,3 +8,6 @@ AllowShortLoopsOnASingleLine: false
 DerivePointerAlignment: true
 KeepEmptyLinesAtTheStartOfBlocks: true
 SortIncludes: false
+
+AlignAfterOpenBracket: BlockIndent
+BinPackArguments: false
