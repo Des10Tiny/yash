@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <format>
 #include <stdexcept>
 #include <string>
 
@@ -9,6 +10,7 @@ enum ExitCode : std::uint8_t {
     SUCCESS = 0,             // Execution completed successfully
     GENERAL_FAILURE = 1,     // Catchall for general errors (e.g., cd to wrong dir)
     SYNTAX_ERROR = 2,        // Misuse of shell builtins or syntax error
+    CRITICAL_FAILURE = 3,    // Unrecoverable internal error
     PERMISSION_DENIED = 126, // Command invoked cannot execute (bad permissions)
     COMMAND_NOT_FOUND = 127, // Command not found in PATH
     FATAL_SIGNAL_BASE = 128  // Base code for fatal signals (e.g., 128 + 2 for SIGINT)
@@ -66,7 +68,16 @@ public:
 
 // Executor: signals the shell to terminate gracefully and unwind the stack
 class YashExitException final : public YashError {
+public:
     explicit YashExitException(int code = ExitCode::SUCCESS)
         : YashError("yash: exit", code) {
+    }
+};
+
+// Executor: BUILTINS
+class YashBuiltinError final : public YashError {
+public:
+    explicit YashBuiltinError(const std::string& command, int code = ExitCode::GENERAL_FAILURE)
+        : YashError(std::format("yash: {}", command), code) {
     }
 };
