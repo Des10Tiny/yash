@@ -172,3 +172,56 @@ TEST_F(ExecutorTest, IdioticInput_MaxArgsLimit) {
 
     EXPECT_NO_FATAL_FAILURE({ executor.RunPipeline(p); });
 }
+
+// ============================================================================
+// BUILTINS
+// ============================================================================
+
+TEST_F(ExecutorTest, BuiltinCd_ChangesDirectorySuccessfully) {
+    char cwd[1024];
+    ASSERT_NE(getcwd(cwd, sizeof(cwd)), nullptr);
+    std::string original_dir = cwd;
+
+    auto p = MakePipeline({{"cd", "/tmp"}});
+    EXPECT_EQ(executor.RunPipeline(p), 0);
+
+    ASSERT_NE(getcwd(cwd, sizeof(cwd)), nullptr);
+    EXPECT_STREQ(cwd, "/tmp");
+
+    chdir(original_dir.c_str());
+}
+
+TEST_F(ExecutorTest, BuiltinCd_ReturnsErrorOnNonExistentPath) {
+    auto p = MakePipeline({{"cd", "/path/that/definitely/does/not/exist_12345"}});
+
+    EXPECT_EQ(executor.RunPipeline(p), 1);
+}
+
+TEST_F(ExecutorTest, BuiltinCd_NoArgsGoesToHome) {
+    char cwd[1024];
+    ASSERT_NE(getcwd(cwd, sizeof(cwd)), nullptr);
+    std::string original_dir = cwd;
+
+    auto p = MakePipeline({{"cd"}});
+    EXPECT_EQ(executor.RunPipeline(p), 0);
+
+    const char* home = getenv("HOME");
+    if (home) {
+        ASSERT_NE(getcwd(cwd, sizeof(cwd)), nullptr);
+        EXPECT_STREQ(cwd, home);
+    }
+
+    chdir(original_dir.c_str());
+}
+
+TEST_F(ExecutorTest, BuiltinExit_ThrowsExitException) {
+    auto p = MakePipeline({{"exit"}});
+
+    EXPECT_THROW({ executor.RunPipeline(p); }, YashExitException);
+}
+
+TEST_F(ExecutorTest, BuiltinExit_DoesNotRunSubsequentCommandsInPipeline) {
+    auto p = MakePipeline({{"exit"}, {"echo", "should_not_run"}});
+
+    EXPECT_THROW({ executor.RunPipeline(p); }, YashExitException);
+}

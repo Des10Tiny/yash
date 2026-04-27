@@ -63,3 +63,10 @@ public:
         : YashError("yash: command not found: " + command, ExitCode::COMMAND_NOT_FOUND) {
     }
 };
+
+// Executor: signals the shell to terminate gracefully and unwind the stack
+class YashExitException final : public YashError {
+    explicit YashExitException(int code = ExitCode::SUCCESS)
+        : YashError("yash: exit", code) {
+    }
+};
