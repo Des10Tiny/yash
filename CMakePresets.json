@@ -1,0 +1,72 @@
+{
+    "version": 8,
+    "configurePresets": [
+        {
+            "name": "Tests-No-Sanitizers",
+            "displayName": "Debug + Tests (no sanitizers)",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/${presetName}",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "BUILD_TESTS": "ON",
+                "BUILD_TESTS_SANITIZED": "OFF"
+            }
+        },
+        {
+            "name": "Release",
+            "displayName": "Release + No Tests",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/${presetName}",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "BUILD_TESTS": "OFF",
+                "BUILD_TESTS_SANITIZED": "OFF"
+            }
+        },
+        {
+            "name": "Release+tests",
+            "displayName": "Release + Tests (no sanitizers)",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/${presetName}",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "BUILD_TESTS": "OFF",
+                "BUILD_TESTS_SANITIZED": "OFF"
+            }
+        },
+        {
+            "name": "All-Tests-On",
+            "displayName": "Debug + Tests (all)",
+            "description": "Sets Ninja generator, build and install directory",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/${presetName}",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "BUILD_TESTS": "ON",
+                "BUILD_TESTS_SANITIZED": "ON"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "Tests-No-Sanitizers",
+            "configurePreset": "Tests-No-Sanitizers",
+            "jobs": 0
+        },
+        {
+            "name": "Release",
+            "configurePreset": "Release",
+            "jobs": 0
+        },
+        {
+            "name": "Release+tests",
+            "configurePreset": "Release+tests",
+            "jobs": 0
+        },
+        {
+            "name": "All-Tests-On",
+            "configurePreset": "All-Tests-On",
+            "jobs": 0
+        }
+    ]
+}
