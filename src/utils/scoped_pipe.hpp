@@ -9,9 +9,9 @@
 #include "utils/logger.hpp"
 #include "utils/yash_error.hpp"
 
-class ScopedFD {
+class ScopedPipe {
 public:
-    ScopedFD() {
+    ScopedPipe() {
         std::array<int, 2> raw_pipe_fd;
 
         if (pipe(raw_pipe_fd.data()) == -1) {
@@ -28,7 +28,7 @@ public:
         );
     }
 
-    explicit ScopedFD(bool is_need_to_be_empty) {
+    explicit ScopedPipe(bool is_need_to_be_empty) {
         if (is_need_to_be_empty) {
             raw_read_fd_ = -1;
             raw_write_fd_ = -1;
@@ -38,21 +38,21 @@ public:
         }
     };
 
-    ScopedFD(int raw_read_fd, int raw_write_fd)
+    ScopedPipe(int raw_read_fd, int raw_write_fd)
         : raw_read_fd_(raw_read_fd)
         , raw_write_fd_(raw_write_fd) {
     }
 
-    ScopedFD(const ScopedFD& other) = delete;
-    ScopedFD& operator=(const ScopedFD& other) = delete;
+    ScopedPipe(const ScopedPipe& other) = delete;
+    ScopedPipe& operator=(const ScopedPipe& other) = delete;
 
-    ScopedFD(ScopedFD&& other) noexcept {
+    ScopedPipe(ScopedPipe&& other) noexcept {
         raw_read_fd_ = std::exchange(other.raw_read_fd_, -1);
         raw_write_fd_ = std::exchange(other.raw_write_fd_, -1);
         is_both_fd_correct_ = std::exchange(other.is_both_fd_correct_, false);
     };
 
-    ScopedFD& operator=(ScopedFD&& other) noexcept {
+    ScopedPipe& operator=(ScopedPipe&& other) noexcept {
         if (this != &other) {
             CloseAllRawFD();
             raw_read_fd_ = std::exchange(other.raw_read_fd_, -1);
@@ -148,7 +148,7 @@ public:
         return is_both_fd_correct_;
     }
 
-    ~ScopedFD() {
+    ~ScopedPipe() {
         LOG_DEBUG("~ScopedFD(): ScopedFD - call destructor");
 
         if (raw_read_fd_ != -1) {

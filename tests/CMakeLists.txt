@@ -11,7 +11,7 @@ set(TEST_SOURCES
     yash_main_tests.cpp
     tokenizer_tests.cpp
     parser_tests.cpp
-    scoped_fd_test.cpp
+    scoped_pipe_test.cpp
     config_parser_test.cpp
     executor_base_test.cpp
 )

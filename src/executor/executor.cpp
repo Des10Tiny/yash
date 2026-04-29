@@ -10,7 +10,7 @@
 #include "executor.hpp"
 #include "parser/parser.hpp"
 #include "utils/logger.hpp"
-#include "utils/scoped_fd.hpp"
+#include "utils/scoped_pipe.hpp"
 #include "utils/yash_error.hpp"
 
 Executor::Executor() {
@@ -38,10 +38,10 @@ int Executor::RunPipeline(Pipeline& pipeline) {
         std::vector<pid_t> all_children_to_wait;
         all_children_to_wait.reserve(size_of_pipline);
 
-        ScopedFD prev_read_fd{true};
+        ScopedPipe prev_read_fd{true};
 
         for (Command& i : pipeline.commands) {
-            ScopedFD pipe{true};
+            ScopedPipe pipe{true};
 
             if (curr_size != size_of_pipline - 1) {
                 LOG_DEBUG(
