@@ -1,5 +1,4 @@
 #include "utils/logger.hpp"
-#include "utils/yash_error.hpp"
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -32,6 +31,7 @@ public:
     };
 
     ~UniqueFD() {
+        LOG_DEBUG("~UniqueFD(): ScopedFD - call destructor");
         CloseFD();
     }
 
@@ -39,7 +39,7 @@ public:
         if (opened_fd_ != -1) {
             if (close(opened_fd_) == -1) {
                 LOG_WARN(
-                    "CloseFD(): Cannot close File Descriptor fd={}", opened_fd_
+                    "UniqueFD(): Cannot close File Descriptor fd={}", opened_fd_
 
                 );
             }
@@ -48,17 +48,21 @@ public:
     }
 
     template <typename... Args>
-    void CreateNewFD(Args&&... args) {
+    [[nodiscard("You must verify if FD was actually created before using it")]] bool
+    CreateNewFD(Args&&... args) {
         CloseFD();
 
         int fd = open(std::forward<Args>(args)...);
 
         if (fd == -1) {
-            throw YashSystemError("CreateFD(): Cannot make new fd");
+            LOG_WARN("CreateFD(): Cannot make new fd");
+            return false;
         }
 
         opened_fd_ = fd;
         LOG_DEBUG("CreateNewFD Get new fd={}", opened_fd_);
+
+        return true;
     }
 
     [[nodiscard]] int GetRawFD() const {

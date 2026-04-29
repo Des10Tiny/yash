@@ -44,14 +44,14 @@ public:
         std::array<int, 2> raw_pipe_fd;
 
         if (pipe(raw_pipe_fd.data()) == -1) {
-            throw YashSystemError("TakeNewFD(): Cannot make new pipe");
+            throw YashSystemError("CreatePipe(): Cannot make new pipe");
         }
 
         raw_read_fd_ = raw_pipe_fd[0];
         raw_write_fd_ = raw_pipe_fd[1];
 
         LOG_DEBUG(
-            "TakeNewFD(): Get current FD: Read={} Write={}", raw_read_fd_, raw_write_fd_
+            "CreatePipe(): Get current FD: Read={} Write={}", raw_read_fd_, raw_write_fd_
 
         );
     }

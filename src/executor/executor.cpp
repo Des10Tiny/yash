@@ -11,6 +11,7 @@
 #include "parser/parser.hpp"
 #include "utils/logger.hpp"
 #include "utils/scoped_pipe.hpp"
+#include "utils/unique_fd.hpp"
 #include "utils/yash_error.hpp"
 
 Executor::Executor() {
@@ -73,27 +74,36 @@ int Executor::RunPipeline(Pipeline& pipeline) {
                 }
 
                 if (prev_read_fd.GetRawReadFD() != -1) {
-                    int dup2_read_status = dup2(prev_read_fd.GetRawReadFD(), STDIN_FILENO);
-
                     LOG_DEBUG(
                         "Child made dup2 for read"
 
                     );
 
-                    if (dup2_read_status < 0) {
-                        throw YashSystemError("dup2 create read failed");
+                    if (dup2(prev_read_fd.GetRawReadFD(), STDIN_FILENO) < 0) {
+                        std::cerr << std::format(
+                                         "yash: pipe: dup2 create read failed: {}",
+                                         std::strerror(errno)
+                                     )
+                                  << '\n';
+
+                        std::_Exit(1);
                     }
                 }
 
                 if (pipe.GetRawReadFD() != -1 && pipe.GetRawWriteFD() != -1) {
-                    int dup2_write_status = dup2(pipe.GetRawWriteFD(), STDOUT_FILENO);
                     LOG_DEBUG(
                         "Child made dup2 for write"
 
                     );
 
-                    if (dup2_write_status < 0) {
-                        throw YashSystemError("dup2 create write failed");
+                    if (dup2(pipe.GetRawWriteFD(), STDOUT_FILENO) < 0) {
+                        std::cerr << std::format(
+                                         "yash: pipe: dup2 create write failed: {}",
+                                         std::strerror(errno)
+                                     )
+                                  << '\n';
+
+                        std::_Exit(1);
                     }
                 }
 
@@ -105,6 +115,52 @@ int Executor::RunPipeline(Pipeline& pipeline) {
 
                 prev_read_fd.CloseRawReadFD();
                 std::vector<char*> char_vector = CharFromVectorHandler(i.args);
+
+                if (!i.redirect_in.empty()) {
+                    UniqueFD redirect_in;
+                    if (!redirect_in.CreateNewFD(i.redirect_in.data(), O_RDONLY)) {
+                        std::cerr << std::format(
+                                         "yash: cannot make new fd:{}", std::strerror(errno)
+                                     )
+                                  << '\n';
+                        std::_Exit(1);
+                    }
+
+                    if (dup2(redirect_in.GetRawFD(), STDIN_FILENO) < 0) {
+                        std::cerr << std::format("yash: redirection error:{}", std::strerror(errno))
+                                  << '\n';
+                        std::_Exit(1);
+                    }
+                }
+
+                if (!i.redirect_out.empty()) {
+                    UniqueFD redirect_out;
+
+                    if (i.append_out) {
+                        if (!redirect_out.CreateNewFD(
+                                i.redirect_out.data(), O_WRONLY | O_CREAT | O_APPEND, 0666
+                            )) {
+                            std::cerr
+                                << std::format("yash: cannot make new fd:{}", std::strerror(errno))
+                                << '\n';
+                            std::_Exit(1);
+                        }
+                    } else {
+                        if (!redirect_out.CreateNewFD(
+                                i.redirect_out.data(), O_WRONLY | O_CREAT | O_TRUNC, 0666
+                            )) {
+                            std::cerr
+                                << std::format("yash: cannot make new fd:{}", std::strerror(errno))
+                                << '\n';
+                            std::_Exit(1);
+                        }
+                    }
+                    if (dup2(redirect_out.GetRawFD(), STDOUT_FILENO) < 0) {
+                        std::cerr << std::format("yash: redirection error:{}", std::strerror(errno))
+                                  << '\n';
+                        std::_Exit(1);
+                    }
+                }
 
                 execvp(char_vector[0], char_vector.data());
                 HandleExecFailure(char_vector[0], errno);
