@@ -1,0 +1,70 @@
+#include "utils/logger.hpp"
+#include "utils/yash_error.hpp"
+
+#include <fcntl.h>
+#include <unistd.h>
+#include <utility>
+
+class UniqueFD {
+public:
+    explicit UniqueFD() {
+        opened_fd_ = -1;
+    }
+
+    explicit UniqueFD(int opened_fd)
+        : opened_fd_(opened_fd) {
+    }
+
+    UniqueFD(const UniqueFD& other) = delete;
+    UniqueFD& operator=(const UniqueFD& other) = delete;
+
+    UniqueFD(UniqueFD&& other) noexcept {
+        opened_fd_ = std::exchange(other.opened_fd_, -1);
+    };
+
+    UniqueFD& operator=(UniqueFD&& other) noexcept {
+        if (this != &other) {
+            CloseFD();
+            opened_fd_ = std::exchange(other.opened_fd_, -1);
+        }
+
+        return *this;
+    };
+
+    ~UniqueFD() {
+        CloseFD();
+    }
+
+    void CloseFD() {
+        if (opened_fd_ != -1) {
+            if (close(opened_fd_) == -1) {
+                LOG_WARN(
+                    "CloseFD(): Cannot close File Descriptor fd={}", opened_fd_
+
+                );
+            }
+        }
+        opened_fd_ = -1;
+    }
+
+    template <typename... Args>
+    void CreateNewFD(Args&&... args) {
+        CloseFD();
+
+        int fd = open(std::forward<Args>(args)...);
+
+        if (fd == -1) {
+            throw YashSystemError("CreateFD(): Cannot make new fd");
+        }
+
+        opened_fd_ = fd;
+        LOG_DEBUG("CreateNewFD Get new fd={}", opened_fd_);
+    }
+
+    [[nodiscard]] int GetRawFD() const {
+        return opened_fd_;
+    }
+
+private:
+    int opened_fd_ = -1;
+};
