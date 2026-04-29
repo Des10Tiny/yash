@@ -1,7 +1,6 @@
 #include <cerrno>
 #include <cstddef>
 #include <cstdlib>
-#include <exception>
 #include <iostream>
 #include <string>
 #include <sys/wait.h>
@@ -27,8 +26,7 @@ int Executor::RunPipeline(Pipeline& pipeline) {
     if (auto it_is_in_builtins = builtins_.find(pipeline.commands[0].args[0]);
         it_is_in_builtins != builtins_.end()) {
         if (pipeline.commands.size() > 1) {
-            // FIXME: Need remove Syntax Error
-            throw YashSyntaxError("builtins cannot be used in pipelines");
+            throw YashBuiltinError("builtins cannot be used in pipelines");
         }
 
         LOG_DEBUG("Command: \'{}\' find in builtins", it_is_in_builtins->first);
@@ -207,51 +205,26 @@ int Executor::WaitForAllChildren(const std::vector<pid_t>& all_children_to_wait)
 }
 
 int Executor::RunChangeDirectory(const Command& cmd) {
-    // FIXME: Need remake this func
-    try {
-        int exit_code = ExitCode::SUCCESS;
+    if (cmd.args.size() == 1) {
+        const char* home_value = getenv("HOME");
 
-        if (cmd.args.size() == 1) {
-            char* home_value = getenv("HOME");
-
-            if (!home_value) {
-                throw YashBuiltinError("cd: HOME not set");
-            }
-
-            int status_chdir = chdir(home_value);
-
-            if (status_chdir == -1) {
-                throw YashBuiltinError(
-                    std::format("cd: {}: {}", cmd.args[1], std::strerror(errno))
-                );
-            }
-
-        } else if (cmd.args.size() == 2) {
-            if (chdir(cmd.args[1].c_str()) == -1) {
-                throw YashBuiltinError(
-                    std::format("cd: {}: {}", cmd.args[1], std::strerror(errno))
-                );
-            }
-
-        } else {
-            throw YashBuiltinError("cd: too many arguments");
+        if (!home_value) {
+            throw YashBuiltinError("cd: HOME not set");
         }
 
-        return exit_code;
+        if (chdir(home_value) == -1) {
+            throw YashBuiltinError(std::format("cd: {}: {}", home_value, std::strerror(errno)));
+        }
+
+    } else if (cmd.args.size() == 2) {
+        if (chdir(cmd.args[1].c_str()) == -1) {
+            throw YashBuiltinError(std::format("cd: {}: {}", cmd.args[1], std::strerror(errno)));
+        }
+    } else {
+        throw YashBuiltinError("cd: too many arguments");
     }
 
-    catch (const YashError& e) {
-        std::cerr << e.what() << '\n';
-        return e.GetCode();
-    } catch (const std::exception& e) {
-        LOG_FATAL(
-            "cd: critical failure"
-
-        );
-        return ExitCode::CRITICAL_FAILURE;
-    }
-
-    return 1;
+    return ExitCode::SUCCESS;
 }
 
 [[noreturn]] int Executor::RunExit(const Command& cmd) {

@@ -70,26 +70,28 @@ int main() {
                 last_exit_status = executor.RunPipeline(*pipeline);
             }
 
-        } catch (const YashSyntaxError& e) {
-            std::cerr << e.what() << '\n';
-
-            last_exit_status = e.GetCode();
-            LOG_WARN("Syntax error: {}", e.what());
-
-        } catch (const YashCommandNotFoundError& e) {
-            std::cerr << e.what() << '\n';
-
-            last_exit_status = e.GetCode();
-            LOG_WARN("Command not found: {}", e.what());
-
         } catch (const YashExitException& e) {
             last_exit_status = e.GetCode();
             break;
+
         } catch (const YashError& e) {
             std::cerr << e.what() << '\n';
-
             last_exit_status = e.GetCode();
-            LOG_WARN("Execution error: {}", e.what());
+
+            switch (last_exit_status) {
+            case ExitCode::SYNTAX_ERROR:
+                LOG_WARN("Syntax error: {}", e.what());
+                break;
+            case ExitCode::COMMAND_NOT_FOUND:
+                LOG_WARN("Command not found: {}", e.what());
+                break;
+            case ExitCode::PERMISSION_DENIED:
+                LOG_WARN("Permission denied: {}", e.what());
+                break;
+            default:
+                LOG_WARN("Execution error/Builtin error: {}", e.what());
+                break;
+            }
 
         } catch (const std::exception& e) {
             std::cerr << "yash: unexpected fatal error: " << e.what() << '\n';
