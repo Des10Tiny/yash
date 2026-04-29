@@ -38,17 +38,17 @@ int Executor::RunPipeline(Pipeline& pipeline) {
         std::vector<pid_t> all_children_to_wait;
         all_children_to_wait.reserve(size_of_pipline);
 
-        ScopedPipe prev_read_fd{true};
+        ScopedPipe prev_read_fd;
 
         for (Command& i : pipeline.commands) {
-            ScopedPipe pipe{true};
+            ScopedPipe pipe;
 
             if (curr_size != size_of_pipline - 1) {
                 LOG_DEBUG(
                     "Executor(): Ask new fd"
 
                 );
-                pipe.TakeNewFD();
+                pipe.CreatePipe();
                 LOG_DEBUG(
                     "Get new fd Read={} Write={}", pipe.GetRawReadFD(), pipe.GetRawWriteFD()
 
@@ -85,7 +85,7 @@ int Executor::RunPipeline(Pipeline& pipeline) {
                     }
                 }
 
-                if (pipe.IsBothCorrect()) {
+                if (pipe.GetRawReadFD() != -1 && pipe.GetRawWriteFD() != -1) {
                     int dup2_write_status = dup2(pipe.GetRawWriteFD(), STDOUT_FILENO);
                     LOG_DEBUG(
                         "Child made dup2 for write"

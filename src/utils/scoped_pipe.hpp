@@ -11,31 +11,9 @@
 
 class ScopedPipe {
 public:
-    ScopedPipe() {
-        std::array<int, 2> raw_pipe_fd;
-
-        if (pipe(raw_pipe_fd.data()) == -1) {
-            throw YashSystemError("ScopedFD(): Cannot make new pipe");
-        }
-
-        raw_read_fd_ = raw_pipe_fd[0];
-        raw_write_fd_ = raw_pipe_fd[1];
-        is_both_fd_correct_ = true;
-
-        LOG_DEBUG(
-            "ScopedFD(): Get current FD: Read={} Write={}", raw_read_fd_, raw_write_fd_
-
-        );
-    }
-
-    explicit ScopedPipe(bool is_need_to_be_empty) {
-        if (is_need_to_be_empty) {
-            raw_read_fd_ = -1;
-            raw_write_fd_ = -1;
-            is_both_fd_correct_ = false;
-        } else {
-            LOG_WARN("ScopedFD(bool is_need_to_be_emty): You doing something nasty");
-        }
+    explicit ScopedPipe() {
+        raw_read_fd_ = -1;
+        raw_write_fd_ = -1;
     };
 
     ScopedPipe(int raw_read_fd, int raw_write_fd)
@@ -49,7 +27,6 @@ public:
     ScopedPipe(ScopedPipe&& other) noexcept {
         raw_read_fd_ = std::exchange(other.raw_read_fd_, -1);
         raw_write_fd_ = std::exchange(other.raw_write_fd_, -1);
-        is_both_fd_correct_ = std::exchange(other.is_both_fd_correct_, false);
     };
 
     ScopedPipe& operator=(ScopedPipe&& other) noexcept {
@@ -57,13 +34,12 @@ public:
             CloseAllRawFD();
             raw_read_fd_ = std::exchange(other.raw_read_fd_, -1);
             raw_write_fd_ = std::exchange(other.raw_write_fd_, -1);
-            is_both_fd_correct_ = true;
         }
 
         return *this;
     };
 
-    void TakeNewFD() {
+    void CreatePipe() {
         CloseAllRawFD();
         std::array<int, 2> raw_pipe_fd;
 
@@ -73,7 +49,6 @@ public:
 
         raw_read_fd_ = raw_pipe_fd[0];
         raw_write_fd_ = raw_pipe_fd[1];
-        is_both_fd_correct_ = true;
 
         LOG_DEBUG(
             "TakeNewFD(): Get current FD: Read={} Write={}", raw_read_fd_, raw_write_fd_
@@ -83,8 +58,6 @@ public:
 
     void CloseRawReadFD() {
         if (raw_read_fd_ != -1) {
-            is_both_fd_correct_ = false;
-
             if (close(raw_read_fd_) == -1) {
                 throw YashSystemError(
                     std::format(
@@ -99,8 +72,6 @@ public:
 
     void CloseRawWriteFD() {
         if (raw_write_fd_ != -1) {
-            is_both_fd_correct_ = false;
-
             if (close(raw_write_fd_) == -1) {
                 throw YashSystemError(
                     std::format(
@@ -114,8 +85,6 @@ public:
     }
 
     void CloseAllRawFD() {
-        is_both_fd_correct_ = false;
-
         if (raw_read_fd_ != -1) {
             if (close(raw_read_fd_) == -1) {
                 LOG_WARN(
@@ -144,10 +113,6 @@ public:
         return raw_write_fd_;
     }
 
-    [[nodiscard]] bool IsBothCorrect() const {
-        return is_both_fd_correct_;
-    }
-
     ~ScopedPipe() {
         LOG_DEBUG("~ScopedFD(): ScopedFD - call destructor");
 
@@ -172,5 +137,4 @@ public:
 private:
     int raw_read_fd_ = -1;
     int raw_write_fd_ = -1;
-    bool is_both_fd_correct_ = true;
 };
