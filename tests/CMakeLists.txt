@@ -15,6 +15,7 @@ set(TEST_SOURCES
     unique_fd_test.cpp
     config_parser_test.cpp
     executor_base_test.cpp
+    executor_redirect_tests.cpp
 )
 
 include(GoogleTest)

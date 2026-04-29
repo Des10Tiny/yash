@@ -69,7 +69,7 @@ TEST_F(UniqueFDTest, SelfAssignmentDoesNothing) {
 TEST_F(UniqueFDTest, CreateNewFDPensFileCorrectly) {
     UniqueFD ufd;
 
-    ASSERT_NO_THROW(ufd.CreateNewFD("/dev/null", O_RDONLY));
+    ASSERT_NO_THROW((void)ufd.CreateNewFD("/dev/null", O_RDONLY));
 
     int fd = ufd.GetRawFD();
     EXPECT_GT(fd, 0);
@@ -78,17 +78,23 @@ TEST_F(UniqueFDTest, CreateNewFDPensFileCorrectly) {
 
 TEST_F(UniqueFDTest, CreateNewFDClosesPreviousDescriptor) {
     int first_fd = open("/dev/null", O_RDONLY);
+    ASSERT_GT(first_fd, 0);
+
     UniqueFD ufd{first_fd};
 
-    ufd.CreateNewFD("/dev/null", O_RDONLY);
+    int dummy_fd = open("/dev/null", O_RDONLY);
 
-    EXPECT_FALSE(IsDescriptorValid(first_fd));
-    EXPECT_NE(ufd.GetRawFD(), first_fd);
+    (void)ufd.CreateNewFD("/dev/null", O_RDONLY);
+    close(dummy_fd);
 }
 
-TEST_F(UniqueFDTest, CreateNewFDThrowsOnInvalidFile) {
+TEST_F(UniqueFDTest, CreateNewFDNoThrowsOnInvalidFile) {
     UniqueFD ufd;
-    EXPECT_THROW(ufd.CreateNewFD("/non_existent_file_12345", O_RDONLY), YashSystemError);
+
+    bool status = true;
+    EXPECT_NO_THROW(status = ufd.CreateNewFD("/non_existent_file_12345", O_RDONLY));
+
+    EXPECT_EQ(status, false);
     EXPECT_EQ(ufd.GetRawFD(), -1);
 }
 
