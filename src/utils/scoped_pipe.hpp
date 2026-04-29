@@ -115,23 +115,7 @@ public:
 
     ~ScopedPipe() {
         LOG_DEBUG("~ScopedFD(): ScopedFD - call destructor");
-
-        if (raw_read_fd_ != -1) {
-            if (close(raw_read_fd_) == -1) {
-                LOG_WARN(
-                    "~ScopedFD(): Cannot close Read File Descriptor read_fd={}", raw_read_fd_
-
-                );
-            }
-        }
-
-        if (raw_write_fd_ != -1) {
-            if (close(raw_write_fd_) == -1) {
-                LOG_WARN(
-                    "~ScopedFD(): Cannot close Write File Descriptor write_fd={}", raw_write_fd_
-                );
-            }
-        }
+        CloseAllRawFD();
     }
 
 private:
