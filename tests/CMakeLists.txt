@@ -8,7 +8,6 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 fetchcontent_makeavailable(googletest)
 
 set(TEST_SOURCES
-    yash_main_tests.cpp
     tokenizer_tests.cpp
     parser_tests.cpp
     scoped_pipe_test.cpp
@@ -16,6 +15,7 @@ set(TEST_SOURCES
     config_parser_test.cpp
     executor_base_test.cpp
     executor_redirect_tests.cpp
+    yash_base_tests.cpp
 )
 
 include(GoogleTest)
