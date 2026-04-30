@@ -120,3 +120,32 @@ TEST_F(UniqueFDTest, MultipleMovesWork) {
     EXPECT_EQ(ufd3.GetRawFD(), raw_fd);
     EXPECT_TRUE(IsDescriptorValid(raw_fd));
 }
+
+TEST_F(UniqueFDTest, DestructorClosesFileDescriptor) {
+    int raw_fd_copy = -1;
+    const char* test_file = "/tmp/yash_fd_test.txt";
+
+    std::ofstream f(test_file);
+    f << "test";
+    f.close();
+
+    {
+        UniqueFD ufd;
+        bool status = ufd.CreateNewFD(test_file, O_RDONLY);
+        ASSERT_TRUE(status);
+
+        raw_fd_copy = ufd.GetRawFD();
+        ASSERT_GT(raw_fd_copy, 2);
+
+        char buf[1];
+        EXPECT_EQ(read(raw_fd_copy, buf, 1), 1);
+    }
+
+    char buf[1];
+    ssize_t read_result = read(raw_fd_copy, buf, 1);
+
+    EXPECT_EQ(read_result, -1);
+    EXPECT_EQ(errno, EBADF);
+
+    std::filesystem::remove(test_file);
+}

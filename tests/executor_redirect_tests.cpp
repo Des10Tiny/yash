@@ -126,3 +126,14 @@ TEST_F(RedirectionTest, OutputToDirectoryFails) {
     int status = executor.RunPipeline(p);
     EXPECT_NE(status, 0);
 }
+
+TEST_F(RedirectionTest, ReadAndWriteToSameFileClearsIt) {
+    std::ofstream f(in_file);
+    f << "data";
+    f.close();
+
+    auto p = MakeRedirPipeline({"cat"}, in_file, in_file, false);
+    EXPECT_EQ(executor.RunPipeline(p), 0);
+
+    EXPECT_EQ(ReadFileContents(in_file), "");
+}
