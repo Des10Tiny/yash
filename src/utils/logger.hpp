@@ -9,7 +9,8 @@ enum class LogLevel : std::uint8_t { NONE = 0, FATAL = 1, WARNING = 2, INFO = 3,
 
 class Logger {
 public:
-    static void Init(LogLevel level, const std::string& filename = ".yash.log");
+    [[nodiscard("You must verify if Logger was actually created before using it")]] static bool
+    Init(LogLevel level, const std::string& filename = ".yash.log");
     static void Write(LogLevel level, const std::string& msg);
 
     static LogLevel GetLevel() {

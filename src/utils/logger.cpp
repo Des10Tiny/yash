@@ -5,17 +5,21 @@
 #include <sstream>
 #include <unistd.h>
 
-void Logger::Init(LogLevel level, const std::string& filename) {
-    current_level = level;
+bool Logger::Init(LogLevel level, const std::string& filename) {
+    if (file.is_open()) {
+        file.close();
+    }
 
+    current_level = level;
     if (level == LogLevel::NONE) {
-        return;
+        return true;
     }
 
     file.open(filename, std::ios::out | std::ios::app);
 
     if (!file.is_open()) {
         std::cerr << "yash warning: failed to open log file '" << filename << "'\n";
+        return false;
     }
 
     file << "\n===============================================================\n"
@@ -23,6 +27,8 @@ void Logger::Init(LogLevel level, const std::string& filename) {
          << "YASH SESSION STARTED (Log Level: " << LevelToString(level) << ")\n"
          << "===============================================================\n";
     file.flush();
+
+    return true;
 }
 
 void Logger::Write(LogLevel level, const std::string& msg) {
