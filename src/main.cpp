@@ -1,107 +1,22 @@
-#include <csignal>
-#include <cstdlib>
-#include <iostream>
-#include <sstream>
-#include <string>
-
-#include "executor/executor.hpp"
-#include "parser/parser.hpp"
-#include "tokenizer/tokenizer.hpp"
-#include "utils/config_parser.hpp"
-#include "utils/logger.hpp"
+#include "core/yash.hpp"
 #include "utils/yash_error.hpp"
 
-volatile std::sig_atomic_t g_signal_status = 0;
-
-void SignalHandler(int signal) {
-    g_signal_status = signal;
-}
+#include <iostream>
 
 int main() {
-    std::signal(SIGINT, SignalHandler);
+    try {
+        Yash shell;
+        return shell.Run();
 
-    ConfigParser conf_parser;
-    YashConfig config = conf_parser.Parse(".yash.conf");
+    } catch (const YashExitException& e) {
+        return e.GetCode();
 
-    Logger::Init(config.log_level, ".yash.log");
-    LOG_INFO("yash shell initialized successfully");
+    } catch (const std::exception& e) {
+        std::cerr << "yash: fatal boot error: " << e.what() << '\n';
+        return 1;
 
-    for (const auto& warning : config.load_warnings) {
-        LOG_WARN("{}", warning);
+    } catch (...) {
+        std::cerr << "yash: unknown fatal error\n";
+        return 2;
     }
-
-    LOG_INFO("{} aliases loaded", config.aliases.size());
-
-    for (const auto& [key, value] : config.aliases) {
-        LOG_DEBUG("Loaded alias: {} -> {}", key, value);
-    }
-
-    Executor executor;
-
-    std::cout << "yash (Execution Mode)\n";
-    std::cout << "Type 'exit' to quit or Ctrl+C to stop.\n";
-
-    int last_exit_status = ExitCode::SUCCESS;
-    std::string line;
-
-    while (true) {
-        if (g_signal_status == SIGINT) {
-            std::cout << "\nbye!\n";
-            std::exit(0);
-        }
-
-        std::cout << "yash> ";
-        if (!std::getline(std::cin, line)) {
-            break;
-        }
-
-        if (line.empty()) {
-            continue;
-        }
-
-        LOG_DEBUG("User input: {}", line);
-        std::stringstream ss{line};
-
-        try {
-            Tokenizer tokenizer{&ss};
-            Parser parser{tokenizer};
-
-            if (auto pipeline = parser.ParsePipeline()) {
-                last_exit_status = executor.RunPipeline(*pipeline);
-            }
-
-        } catch (const YashExitException& e) {
-            last_exit_status = e.GetCode();
-            break;
-
-        } catch (const YashError& e) {
-            std::cerr << e.what() << '\n';
-            last_exit_status = e.GetCode();
-
-            switch (last_exit_status) {
-            case ExitCode::SYNTAX_ERROR:
-                LOG_WARN("Syntax error: {}", e.what());
-                break;
-            case ExitCode::COMMAND_NOT_FOUND:
-                LOG_WARN("Command not found: {}", e.what());
-                break;
-            case ExitCode::PERMISSION_DENIED:
-                LOG_WARN("Permission denied: {}", e.what());
-                break;
-            default:
-                LOG_WARN("Execution error/Builtin error: {}", e.what());
-                break;
-            }
-
-        } catch (const std::exception& e) {
-            std::cerr << "yash: unexpected fatal error: " << e.what() << '\n';
-
-            last_exit_status = ExitCode::GENERAL_FAILURE;
-            LOG_FATAL("Fatal exception: {}", e.what());
-        }
-    }
-
-    LOG_INFO("yash shell shutting down");
-    std::cout << "bye!\n";
-    return last_exit_status;
 }

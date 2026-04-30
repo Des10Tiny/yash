@@ -4,6 +4,7 @@ set(YASH_SOURCES
     executor/executor.cpp
     utils/config_parser.cpp
     utils/logger.cpp
+    core/yash.cpp
 )
 
 add_library(yash_lib STATIC ${YASH_SOURCES})
