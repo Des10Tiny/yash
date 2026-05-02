@@ -69,10 +69,16 @@ TEST_F(YashTest, ExitWithCode) {
 
 TEST_F(YashTest, ConfigAutoGeneration) {
     std::filesystem::path temp_home = std::filesystem::temp_directory_path() / "yash_test_home";
+    std::filesystem::remove_all(temp_home);
     std::filesystem::create_directories(temp_home);
 
     std::string old_home = std::getenv("HOME") ? std::getenv("HOME") : "";
+    const char* old_xdg_ptr = std::getenv("XDG_CONFIG_HOME");
+    std::string old_xdg = old_xdg_ptr ? old_xdg_ptr : "";
+    bool had_xdg = old_xdg_ptr != nullptr;
+
     setenv("HOME", temp_home.c_str(), 1);
+    unsetenv("XDG_CONFIG_HOME");
 
     std::string output;
     RunWithInput("exit\n", output);
@@ -83,5 +89,9 @@ TEST_F(YashTest, ConfigAutoGeneration) {
     EXPECT_TRUE(std::filesystem::exists(expected_config));
 
     setenv("HOME", old_home.c_str(), 1);
+    if (had_xdg) {
+        setenv("XDG_CONFIG_HOME", old_xdg.c_str(), 1);
+    }
+
     std::filesystem::remove_all(temp_home);
 }
