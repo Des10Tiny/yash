@@ -2,6 +2,7 @@
 
 #include <cstdio>
 #include <fcntl.h>
+#include <filesystem>
 #include <gtest/gtest.h>
 #include <unistd.h>
 
