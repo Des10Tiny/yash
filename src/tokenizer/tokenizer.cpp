@@ -51,36 +51,36 @@ std::string ExtractValue(std::istream* data) {
                 continue;
             }
 
-            result_value += curr_char;
+            result_value += static_cast<char>(curr_char);
         }
 
         else if (state == State::IN_SINGLE) {
             if (curr_char == '\'') {
                 state = State::NORMAL;
             } else {
-                result_value += curr_char;
+                result_value += static_cast<char>(curr_char);
             }
         }
 
         else if (state == State::IN_DOUBLE) {
-
             if (curr_char == '\"') {
                 state = State::NORMAL;
             } else {
-                result_value += curr_char;
+                result_value += static_cast<char>(curr_char);
             }
         }
     }
 
     return result_value;
 }
-}  // namespace
+} // namespace
 
-Tokenizer::Tokenizer(std::istream* in) : original_data_(in) {
+Tokenizer::Tokenizer(std::istream* in)
+    : original_data_(in) {
     Next();
 }
 
-bool Tokenizer::IsEnd() {
+bool Tokenizer::IsEnd() const {
     return is_end_;
 }
 

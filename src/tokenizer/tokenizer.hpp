@@ -1,15 +1,16 @@
 #pragma once
 
 #include <cstdint>
-#include <variant>
 #include <istream>
 #include <string>
+#include <variant>
 
 struct WordToken {
     std::string value;
 
     WordToken() = default;
-    WordToken(std::string val) : value(std::move(val)) {
+    WordToken(std::string val)
+        : value(std::move(val)) {
     }
 
     bool operator==(const std::string& other) const {
@@ -35,7 +36,7 @@ class Tokenizer {
 public:
     Tokenizer(std::istream* in);
 
-    bool IsEnd();
+    [[nodiscard]] bool IsEnd() const;
 
     void Next();
 

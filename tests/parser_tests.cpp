@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 #include <sstream>
-#include <stdexcept>
 
 #include "parser/parser.hpp"
 #include "utils/yash_error.hpp"
@@ -60,7 +59,6 @@ TEST(ParserTest, RedirectInAndOut) {
 }
 
 TEST(ParserTest, RedirectWithoutCommandIsStillValid) {
-
     auto result = ParseString("> file.txt");
     ASSERT_TRUE(result.has_value());
     EXPECT_TRUE(result->commands[0].args.empty());

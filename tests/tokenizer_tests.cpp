@@ -1,6 +1,6 @@
-#include "gtest/gtest.h"
 #include "tokenizer/tokenizer.hpp"
 #include "utils/yash_error.hpp"
+#include "gtest/gtest.h"
 
 TEST(TokenizerTest, SimpleCase) {
     std::stringstream ss{R"(ls | grep "somthing new")"};

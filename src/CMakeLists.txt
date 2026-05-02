@@ -4,6 +4,7 @@ set(YASH_SOURCES
     executor/executor.cpp
     utils/config_parser.cpp
     utils/logger.cpp
+    core/yash.cpp
 )
 
 add_library(yash_lib STATIC ${YASH_SOURCES})
@@ -12,7 +13,7 @@ target_include_directories(yash_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 if(MSVC)
     target_compile_options(yash_lib PRIVATE /W4 /WX)
 else()
-    target_compile_options(yash_lib PRIVATE -Wall -Wextra -Werror)
+    target_compile_options(yash_lib PRIVATE -Wall -Wextra -Werror -Wimplicit-fallthrough)
 endif()
 
 

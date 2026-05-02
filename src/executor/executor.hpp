@@ -1,8 +1,8 @@
 #pragma once
 
+#include "parser/parser.hpp"
 #include <functional>
 #include <unordered_map>
-#include "parser/parser.hpp"
 
 class Executor {
 public:
@@ -12,13 +12,9 @@ public:
 private:
     std::unordered_map<std::string, std::function<int(const Command&)>> builtins_;
 
-    int RunChangeDirectory([[maybe_unused]] const Command& cmd) {
-        return 1;
-    }
+    int RunChangeDirectory(const Command& cmd);
 
-    int RunExit([[maybe_unused]] const Command& cmd) {
-        return 1;
-    }
+    [[noreturn]] int RunExit(const Command& cmd);
 
     int WaitForAllChildren(const std::vector<pid_t>& children);
 
@@ -33,4 +29,6 @@ private:
         c_args.push_back(nullptr);
         return c_args;
     }
+
+    [[noreturn]] void HandleExecFailure(const std::string& cmd_name, int err_code);
 };

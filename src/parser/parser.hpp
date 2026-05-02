@@ -1,9 +1,9 @@
 #pragma once
 
+#include "tokenizer/tokenizer.hpp"
 #include <optional>
 #include <string>
 #include <vector>
-#include "tokenizer/tokenizer.hpp"
 
 struct Command {
     std::vector<std::string> args;
@@ -18,7 +18,8 @@ struct Pipeline {
 
 class Parser {
 public:
-    Parser(Tokenizer& tokenizer) : tokenizer_(tokenizer) {
+    Parser(Tokenizer& tokenizer)
+        : tokenizer_(tokenizer) {
     }
 
     std::optional<Pipeline> ParsePipeline();

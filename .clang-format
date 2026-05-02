@@ -1,10 +1,36 @@
-BasedOnStyle: Google
+---
+Language: Cpp
+BasedOnStyle: LLVM
+Standard: c++20
+
 IndentWidth: 4
-AccessModifierOffset: -4
+TabWidth: 4
+UseTab: Never
 ColumnLimit: 100
+
 AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
-DerivePointerAlignment: true
-KeepEmptyLinesAtTheStartOfBlocks: true
-SortIncludes: false
+AllowShortBlocksOnASingleLine: false
+AllowShortLambdasOnASingleLine: All
+AlwaysBreakTemplateDeclarations: Yes
+
+NamespaceIndentation: None
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+
+DerivePointerAlignment: false
+PointerAlignment: Left
+
+BreakConstructorInitializers: BeforeComma
+ConstructorInitializerIndentWidth: 4
+
+AlignAfterOpenBracket: BlockIndent
+BinPackArguments: false
+BinPackParameters: false
+
+AccessModifierOffset: -4
+
+SortIncludes: true
+KeepEmptyLinesAtTheStartOfBlocks: false
+...

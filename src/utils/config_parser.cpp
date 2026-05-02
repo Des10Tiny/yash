@@ -38,7 +38,6 @@ YashConfig ConfigParser::Parse(const std::string& filename) {
         std::string value;
 
         if (std::getline(is_line, key, '=') && std::getline(is_line, value)) {
-
             auto it = handlers_.find(key);
 
             if (it != handlers_.end()) {

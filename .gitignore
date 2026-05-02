@@ -11,3 +11,5 @@ yash.log
 .yash.log
 yash.conf
 .yash.conf
+out/
+build_linux

@@ -1,8 +1,8 @@
-#include <gtest/gtest.h>
 #include <fcntl.h>
+#include <gtest/gtest.h>
 #include <unistd.h>
 
-#include "utils/scoped_fd.hpp"
+#include "utils/scoped_pipe.hpp"
 
 TEST(ScopedFDTest, ClosesDescriptorOnDestruction) {
     int pipe_fd[2];
@@ -12,7 +12,7 @@ TEST(ScopedFDTest, ClosesDescriptorOnDestruction) {
     int write_fd = pipe_fd[1];
 
     {
-        ScopedFD sfd{read_fd, write_fd};
+        ScopedPipe sfd{read_fd, write_fd};
         EXPECT_EQ(sfd.GetRawReadFD(), read_fd);
         EXPECT_EQ(sfd.GetRawWriteFD(), write_fd);
     }
@@ -33,8 +33,8 @@ TEST(ScopedFDTest, MoveSemanticsWork) {
     int write_fd = pipe_fd[1];
 
     {
-        ScopedFD fd_1{read_fd, write_fd};
-        ScopedFD fd_2{std::move(fd_1)};
+        ScopedPipe fd_1{read_fd, write_fd};
+        ScopedPipe fd_2{std::move(fd_1)};
 
         EXPECT_EQ(fd_1.GetRawReadFD(), -1);
         EXPECT_EQ(fd_1.GetRawWriteFD(), -1);
@@ -65,7 +65,7 @@ TEST(ScopedFDTest, MoveSemanticsByFakeOperatorWork) {
     int write_fd = pipe_fd[1];
 
     {
-        ScopedFD fd_2 = ScopedFD{read_fd, write_fd};
+        ScopedPipe fd_2 = ScopedPipe{read_fd, write_fd};
 
         EXPECT_NE(fcntl(read_fd, F_GETFD), -1);
         EXPECT_NE(errno, EBADF);
@@ -96,8 +96,8 @@ TEST(ScopedFDTest, MoveAssignmentOperatorWorks) {
     int write_fd = pipe_fd[1];
 
     {
-        ScopedFD fd_1{read_fd, write_fd};
-        ScopedFD fd_2{-1, -1};
+        ScopedPipe fd_1{read_fd, write_fd};
+        ScopedPipe fd_2{-1, -1};
 
         fd_2 = std::move(fd_1);
 

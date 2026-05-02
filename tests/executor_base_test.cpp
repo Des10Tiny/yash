@@ -1,5 +1,6 @@
-#include <gtest/gtest.h>
+#include <filesystem>
 #include <fstream>
+#include <gtest/gtest.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -48,11 +49,6 @@ TEST_F(ExecutorTest, EmptyCommandArgsReturnsZero) {
     Command empty_cmd;
     p.commands.push_back(empty_cmd);
     EXPECT_EQ(executor.RunPipeline(p), 0);
-}
-
-TEST_F(ExecutorTest, RunsBuiltinSingleCommand) {
-    auto p = MakePipeline({{"cd", "/tmp"}});
-    EXPECT_EQ(executor.RunPipeline(p), 1);
 }
 
 TEST_F(ExecutorTest, ExternalCommandSuccess) {
@@ -171,4 +167,99 @@ TEST_F(ExecutorTest, IdioticInput_MaxArgsLimit) {
     auto p = MakePipeline({args});
 
     EXPECT_NO_FATAL_FAILURE({ executor.RunPipeline(p); });
+}
+
+// ============================================================================
+// BUILTINS
+// ============================================================================
+
+TEST_F(ExecutorTest, BuiltinCd_ChangesDirectorySuccessfully) {
+    namespace fs = std::filesystem;
+
+    fs::path original_dir = fs::current_path();
+
+    auto p = MakePipeline({{"cd", "/tmp"}});
+    EXPECT_EQ(executor.RunPipeline(p), 0);
+
+    fs::path new_dir = fs::current_path();
+
+    EXPECT_TRUE(fs::equivalent(new_dir, fs::path("/tmp")));
+
+    fs::current_path(original_dir);
+}
+
+TEST_F(ExecutorTest, BuiltinCd_ReturnsErrorOnNonExistentPath) {
+    auto p = MakePipeline({{"cd", "/path/that/definitely/does/not/exist_12345"}});
+
+    try {
+        executor.RunPipeline(p);
+        FAIL() << "Expected YashBuiltinError to be thrown";
+    } catch (const YashBuiltinError& e) {
+        EXPECT_EQ(e.GetCode(), 1);
+        EXPECT_TRUE(std::string(e.what()).find("No such file or directory") != std::string::npos);
+    }
+}
+
+TEST_F(ExecutorTest, BuiltinCd_NoArgsGoesToHome) {
+    namespace fs = std::filesystem;
+    fs::path original_dir = fs::current_path();
+
+    auto p = MakePipeline({{"cd"}});
+    EXPECT_EQ(executor.RunPipeline(p), 0);
+
+    const char* home = getenv("HOME");
+
+    if (home) {
+        fs::path new_dir = fs::current_path();
+        EXPECT_TRUE(fs::equivalent(new_dir, fs::path(home)));
+    }
+
+    fs::current_path(original_dir);
+}
+
+TEST_F(ExecutorTest, BuiltinExit_ThrowsExitException) {
+    auto p = MakePipeline({{"exit"}});
+
+    EXPECT_THROW({ executor.RunPipeline(p); }, YashExitException);
+}
+
+TEST_F(ExecutorTest, BuiltinExit_DoesNotRunSubsequentCommandsInPipeline) {
+    auto p = MakePipeline({{"exit"}, {"echo", "should_not_run"}});
+
+    EXPECT_THROW({ executor.RunPipeline(p); }, YashBuiltinError);
+}
+
+TEST_F(ExecutorTest, BuiltinExit_WithValidCodeThrowsThatCode) {
+    auto p = MakePipeline({{"exit", "42"}});
+
+    try {
+        executor.RunPipeline(p);
+        FAIL() << "Expected YashExitException";
+    } catch (const YashExitException& e) {
+        EXPECT_EQ(e.GetCode(), 42);
+    }
+}
+
+TEST_F(ExecutorTest, BuiltinExit_WithInvalidAlphaCodeThrowsBuiltinError) {
+    auto p = MakePipeline({{"exit", "abc"}});
+
+    try {
+        executor.RunPipeline(p);
+        FAIL() << "Expected YashBuiltinError";
+    } catch (const YashBuiltinError& e) {
+        EXPECT_EQ(e.GetCode(), 1);
+        EXPECT_TRUE(std::string(e.what()).find("numeric argument required") != std::string::npos);
+    }
+}
+
+TEST_F(ExecutorTest, BuiltinExit_TooManyArgsThrowsBuiltinError) {
+    auto p = MakePipeline({{"exit", "1", "2"}});
+
+    try {
+        executor.RunPipeline(p);
+        FAIL() << "Expected YashBuiltinError";
+    } catch (const YashBuiltinError& e) {
+        EXPECT_EQ(e.GetCode(), 1);
+        EXPECT_TRUE(std::string(e.what()).find("too many arguments") != std::string::npos);
+    }
 }

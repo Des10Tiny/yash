@@ -1,24 +1,27 @@
 #pragma once
 
+#include <cstdint>
+#include <format>
 #include <stdexcept>
 #include <string>
-#include <cstdint>
 
 // Standard shell exit codes
 enum ExitCode : std::uint8_t {
-    SUCCESS = 0,              // Execution completed successfully
-    GENERAL_FAILURE = 1,      // Catchall for general errors (e.g., cd to wrong dir)
-    SYNTAX_ERROR = 2,         // Misuse of shell builtins or syntax error
-    PERMISSION_DENIED = 126,  // Command invoked cannot execute (bad permissions)
-    COMMAND_NOT_FOUND = 127,  // Command not found in PATH
-    FATAL_SIGNAL_BASE = 128   // Base code for fatal signals (e.g., 128 + 2 for SIGINT)
+    SUCCESS = 0,             // Execution completed successfully
+    GENERAL_FAILURE = 1,     // Catchall for general errors (e.g., cd to wrong dir)
+    SYNTAX_ERROR = 2,        // Misuse of shell builtins or syntax error
+    CRITICAL_FAILURE = 3,    // Unrecoverable internal error
+    PERMISSION_DENIED = 126, // Command invoked cannot execute (bad permissions)
+    COMMAND_NOT_FOUND = 127, // Command not found in PATH
+    FATAL_SIGNAL_BASE = 128  // Base code for fatal signals (e.g., 128 + 2 for SIGINT)
 };
 
 // Base class for all shell-specific runtime failures
 class YashError : public std::runtime_error {
 public:
     explicit YashError(const std::string& message, int exit_code = 1)
-        : std::runtime_error(message), exit_code_(exit_code) {
+        : std::runtime_error(message)
+        , exit_code_(exit_code) {
     }
 
     [[nodiscard]] int GetCode() const noexcept {
@@ -49,8 +52,9 @@ public:
 class YashPermissionError final : public YashError {
 public:
     explicit YashPermissionError(const std::string& command)
-        : YashError("yash: command found but permission denied: " + command,
-                    ExitCode::PERMISSION_DENIED) {
+        : YashError(
+              "yash: command found but permission denied: " + command, ExitCode::PERMISSION_DENIED
+          ) {
     }
 };
 
@@ -59,5 +63,21 @@ class YashCommandNotFoundError final : public YashError {
 public:
     explicit YashCommandNotFoundError(const std::string& command)
         : YashError("yash: command not found: " + command, ExitCode::COMMAND_NOT_FOUND) {
+    }
+};
+
+// Executor: signals the shell to terminate gracefully and unwind the stack
+class YashExitException final : public YashError {
+public:
+    explicit YashExitException(int code = ExitCode::SUCCESS)
+        : YashError("yash: exit", code) {
+    }
+};
+
+// Executor: BUILTINS
+class YashBuiltinError final : public YashError {
+public:
+    explicit YashBuiltinError(const std::string& command, int code = ExitCode::GENERAL_FAILURE)
+        : YashError(std::format("yash: {}", command), code) {
     }
 };

@@ -1,31 +1,34 @@
 ---
-Checks: "
+Checks: >
   -*,
-  clang-diagnostic-unused-variable,
-  clang-diagnostic-unused-but-set-variable,
+  clang-diagnostic-*,
+  clang-analyzer-*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-narrowing-conversions,
   cppcoreguidelines-avoid-goto,
   cppcoreguidelines-pro-type-const-cast,
-  google-readability-casting,
   modernize-replace-random-shuffle,
+  modernize-use-nullptr,
+  modernize-use-override,
+  modernize-use-nodiscard,
+  modernize-use-equals-default,
+  performance-*,
   readability-braces-around-statements,
   readability-container-size-empty,
   readability-redundant-control-flow,
   readability-redundant-string-init,
-  modernize-use-nullptr,
   readability-identifier-naming,
+  readability-non-const-parameter,
+  readability-redundant-declaration,
+  readability-make-member-function-const,
   google-build-using-namespace,
-  performance-*,
+  google-readability-casting,
   misc-unused-parameters,
   misc-unused-alias-decls,
-  readability-redundant-declaration,
-  bugprone-unused-raii,
-  misc-unused-alias-decls,
-  readability-redundant-declaration,
-  bugprone-unused-raii,
-  misc-const-correctness,
-  readability-non-const-parameter"
+  misc-const-correctness
 
-HeaderFilterRegex: '\.h$'
+HeaderFilterRegex: '\.(h|hpp)$'
 WarningsAsErrors: "*"
 CheckOptions:
   - key: performance-unnecessary-value-param.AllowedTypes

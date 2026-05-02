@@ -1,6 +1,6 @@
-#include <gtest/gtest.h>
-#include <fstream>
 #include <cstdio>
+#include <fstream>
+#include <gtest/gtest.h>
 
 #include "utils/config_parser.hpp"
 
@@ -44,13 +44,12 @@ TEST_F(ConfigParserTest, ParsesLogLevels) {
 }
 
 TEST_F(ConfigParserTest, IgnoresCommentsAndEmptyLines) {
-    std::string content =
-        "# This is a comment\n"
-        "\n"
-        "loglevel=info\n"
-        "# Another comment\n"
-        "   \n"
-        "alias.ll=ls -la\n";
+    std::string content = "# This is a comment\n"
+                          "\n"
+                          "loglevel=info\n"
+                          "# Another comment\n"
+                          "   \n"
+                          "alias.ll=ls -la\n";
 
     CreateTestConfig(test_filename, content);
     ConfigParser parser;
@@ -62,10 +61,9 @@ TEST_F(ConfigParserTest, IgnoresCommentsAndEmptyLines) {
 }
 
 TEST_F(ConfigParserTest, ParsesAliases) {
-    std::string content =
-        "alias.ll=ls -la\n"
-        "alias.go=cd\n"
-        "alias.g=git status\n";
+    std::string content = "alias.ll=ls -la\n"
+                          "alias.go=cd\n"
+                          "alias.g=git status\n";
 
     CreateTestConfig(test_filename, content);
     ConfigParser parser;
@@ -78,10 +76,9 @@ TEST_F(ConfigParserTest, ParsesAliases) {
 }
 
 TEST_F(ConfigParserTest, IgnoresUnknownKeysGracefully) {
-    std::string content =
-        "loglevel=debug\n"
-        "some_weird_setting=42\n"
-        "color=red\n";
+    std::string content = "loglevel=debug\n"
+                          "some_weird_setting=42\n"
+                          "color=red\n";
 
     CreateTestConfig(test_filename, content);
     ConfigParser parser;
@@ -94,10 +91,9 @@ TEST_F(ConfigParserTest, IgnoresUnknownKeysGracefully) {
 }
 
 TEST_F(ConfigParserTest, CollectsWarningsForUnknownKeys) {
-    std::string content =
-        "loglevel=debug\n"
-        "some_weird_setting=42\n"
-        "another_typo=1\n";
+    std::string content = "loglevel=debug\n"
+                          "some_weird_setting=42\n"
+                          "another_typo=1\n";
 
     CreateTestConfig(test_filename, content);
     ConfigParser parser;
