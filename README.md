@@ -8,12 +8,19 @@ In the future, I might experiment with adding a plugin system or custom UI rende
 
 ## Features (Planned / Done)
 
-- [x] Basic CI/CD, CMake setup, and Docker integration.
-- [ ] Core REPL loop.
-- [ ] Command tokenization (handling quotes, spaces).
-- [ ] Parser & Abstract Syntax Tree (AST) generation.
-- [ ] Execution of external commands.
-- [ ] Pipes (`|`) and Redirections (`>`, `<`).
+- [x] Basic CI/CD, CMake setup, and Docker integration
+- [x] Core REPL loop
+- [x] Command tokenization (handling quotes, spaces)
+- [x] Parser & Abstract Syntax Tree (AST) generation
+- [x] Execution of external commands
+- [x] Pipes (`|`) and Redirections (`>`, `<`, `>>`)
+- [x] Core shell builtins (`cd`, `exit`)
+- [x] XDG Base Directory configuration (`~/.config/yash/`)
+- [ ] Logical operators (`&&`, `||`)
+- [ ] Command `source` for live config reloading
+- [ ] Raw terminal mode
+- [ ] History support
+- [ ] Self-written interactive fuzzy finder
 
 ## Building from source
 
