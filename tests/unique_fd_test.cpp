@@ -1,5 +1,6 @@
 #include "utils/unique_fd.hpp"
 
+#include <cstdio>
 #include <fcntl.h>
 #include <gtest/gtest.h>
 #include <unistd.h>
