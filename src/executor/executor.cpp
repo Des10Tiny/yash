@@ -1,7 +1,9 @@
 #include <cerrno>
 #include <cstddef>
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <sys/wait.h>
 #include <unistd.h>

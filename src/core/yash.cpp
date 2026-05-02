@@ -61,6 +61,8 @@ Yash::Yash() {
 
     LOG_INFO("{} aliases loaded", config_.aliases.size());
     for (const auto& [key, value] : config_.aliases) {
+        (void)key;
+        (void)value;
         LOG_DEBUG("Loaded alias: {} -> {}", key, value);
     }
 
