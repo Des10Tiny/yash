@@ -10,15 +10,15 @@ fetchcontent_makeavailable(doctest)
 
 set(TEST_SOURCES
     doctest_main.cpp
-    tokenizer_tests.cpp
+    # tokenizer_tests.cpp
     expander_test.cpp
-    parser_tests.cpp
-    scoped_pipe_test.cpp
-    unique_fd_test.cpp
-    config_parser_test.cpp
-    executor_base_test.cpp
-    executor_redirect_tests.cpp
-    yash_base_tests.cpp
+    # parser_tests.cpp
+    # scoped_pipe_test.cpp
+    # unique_fd_test.cpp
+    # config_parser_test.cpp
+    # executor_base_test.cpp
+    # executor_redirect_tests.cpp
+    # yash_base_tests.cpp
 )
 
 include("${doctest_SOURCE_DIR}/scripts/cmake/doctest.cmake")

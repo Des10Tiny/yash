@@ -1,4 +1,5 @@
 #pragma once
+
 #include "itokenizer.hpp"
 
 class Tokenizer : public ITokenizer {
