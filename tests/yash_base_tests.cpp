@@ -1,5 +1,6 @@
 #include "core/yash.hpp"
 #include "doctest.h"
+#include "utils/mute_tests.hpp"
 #include "utils/yash_error.hpp"
 
 #include <iostream>
@@ -56,6 +57,8 @@ TEST_CASE_FIXTURE(YashTest, "EmptyInputDoesNotCrash") {
 }
 
 TEST_CASE_FIXTURE(YashTest, "UnknownCommandPrintsError") {
+    MuteSTDERR mute;
+
     std::string output;
 
     int code = RunWithInput("some_random_garbage_command\nexit\n", output);

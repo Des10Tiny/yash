@@ -6,6 +6,7 @@
 #include "doctest.h"
 #include "executor/executor.hpp"
 #include "parser/parser.hpp"
+#include "utils/mute_tests.hpp"
 #include "utils/yash_error.hpp"
 
 Pipeline MakePipeline(const std::vector<std::vector<std::string>>& cmds_args) {
@@ -62,16 +63,22 @@ TEST_CASE_FIXTURE(ExecutorTest, "ExternalCommandFailure") {
 }
 
 TEST_CASE_FIXTURE(ExecutorTest, "CommandNotFoundReturns127") {
+    MuteSTDERR mute;
+
     auto p = MakePipeline({{"nonexistent_command_12345"}});
     CHECK(executor.RunPipeline(p) == ExitCode::COMMAND_NOT_FOUND);
 }
 
 TEST_CASE_FIXTURE(ExecutorTest, "PermissionDeniedReturns126") {
+    MuteSTDERR mute;
+
     auto p = MakePipeline({{no_exec_file}});
     CHECK(executor.RunPipeline(p) == ExitCode::PERMISSION_DENIED);
 }
 
 TEST_CASE_FIXTURE(ExecutorTest, "SimplePipelineTwoCommands") {
+    MuteAllSTD mute;
+
     auto p = MakePipeline({{"echo", "hello"}, {"grep", "hello"}});
     CHECK(executor.RunPipeline(p) == 0);
 }
@@ -82,11 +89,15 @@ TEST_CASE_FIXTURE(ExecutorTest, "PipelineWithFailureAtTheEnd") {
 }
 
 TEST_CASE_FIXTURE(ExecutorTest, "PipelineWithCommandNotFoundAtTheEnd") {
+    MuteSTDERR mute;
+
     auto p = MakePipeline({{"echo", "test"}, {"not_exists"}});
     CHECK(executor.RunPipeline(p) == ExitCode::COMMAND_NOT_FOUND);
 }
 
 TEST_CASE_FIXTURE(ExecutorTest, "LongPipeline") {
+    MuteAllSTD mute;
+
     auto p = MakePipeline({{"echo", "hello"}, {"cat"}, {"cat"}, {"cat"}, {"grep", "hello"}});
     CHECK(executor.RunPipeline(p) == 0);
 }
@@ -97,11 +108,15 @@ TEST_CASE_FIXTURE(ExecutorTest, "FailingCommandInTheMiddle") {
 }
 
 TEST_CASE_FIXTURE(ExecutorTest, "MassiveOutputDoesNotDeadlock") {
+    MuteAllSTD mute;
+
     auto p = MakePipeline({{"yes", "test"}, {"head", "-n", "100"}});
     CHECK(executor.RunPipeline(p) == 0);
 }
 
 TEST_CASE_FIXTURE(ExecutorTest, "DirectoryExecutionAttemptReturns126") {
+    MuteSTDERR mute;
+
     auto p = MakePipeline({{"/"}});
     CHECK(executor.RunPipeline(p) == ExitCode::PERMISSION_DENIED);
 }
@@ -112,6 +127,8 @@ TEST_CASE_FIXTURE(ExecutorTest, "KilledBySignalReturns128PlusSignal") {
 }
 
 TEST_CASE_FIXTURE(ExecutorTest, "MassiveArgumentsAllocation") {
+    MuteAllSTD mute;
+
     std::vector<std::string> args = {"echo"};
 
     for (int i = 0; i < 10000; ++i) {
@@ -123,6 +140,8 @@ TEST_CASE_FIXTURE(ExecutorTest, "MassiveArgumentsAllocation") {
 }
 
 TEST_CASE_FIXTURE(ExecutorTest, "FileDescriptorLeakStressTest_100_Pipes") {
+    MuteAllSTD mute;
+
     std::vector<std::vector<std::string>> commands;
     commands.push_back({"echo", "stress_test"});
 
@@ -158,6 +177,8 @@ TEST_CASE_FIXTURE(ExecutorTest, "MachineGun_1000_CommandsSpeedTest") {
 }
 
 TEST_CASE_FIXTURE(ExecutorTest, "IdioticInput_MaxArgsLimit") {
+    MuteSTDERR mute;
+
     std::vector<std::string> args = {"echo"};
     for (int i = 0; i < 50000; ++i) {
         args.push_back("NASTY_TEST_ARGUMENT");

@@ -1,8 +1,20 @@
+#include <cerrno>
 #include <fcntl.h>
 #include <unistd.h>
 
 #include "doctest.h"
 #include "utils/scoped_pipe.hpp"
+
+class ErrnoClearHelper {
+public:
+    ErrnoClearHelper() {
+        errno = 0;
+    }
+
+    ~ErrnoClearHelper() {
+        errno = 0;
+    }
+};
 
 TEST_CASE("ClosesDescriptorOnDestruction") {
     int pipe_fd[2];
@@ -24,7 +36,7 @@ TEST_CASE("ClosesDescriptorOnDestruction") {
     CHECK(errno == EBADF);
 }
 
-TEST_CASE("MoveSemanticsWork") {
+TEST_CASE_FIXTURE(ErrnoClearHelper, "MoveSemanticsWork") {
     int pipe_fd[2];
 
     REQUIRE(pipe(pipe_fd) == 0);
@@ -56,7 +68,7 @@ TEST_CASE("MoveSemanticsWork") {
     CHECK(errno == EBADF);
 }
 
-TEST_CASE("MoveSemanticsByFakeOperatorWork") {
+TEST_CASE_FIXTURE(ErrnoClearHelper, "MoveSemanticsByFakeOperatorWork") {
     int pipe_fd[2];
 
     REQUIRE(pipe(pipe_fd) == 0);
@@ -87,7 +99,7 @@ TEST_CASE("MoveSemanticsByFakeOperatorWork") {
     CHECK(errno == EBADF);
 }
 
-TEST_CASE("MoveAssignmentOperatorWorks") {
+TEST_CASE_FIXTURE(ErrnoClearHelper, "MoveAssignmentOperatorWorks") {
     int pipe_fd[2];
 
     REQUIRE(pipe(pipe_fd) == 0);

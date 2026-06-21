@@ -1,5 +1,6 @@
 #include "doctest.h"
 #include "executor/executor.hpp"
+#include "utils/mute_tests.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -105,6 +106,8 @@ TEST_CASE_FIXTURE(RedirectionTest, "CombinedInputAndOutputRedirection") {
 }
 
 TEST_CASE_FIXTURE(RedirectionTest, "InputFromNonExistentFileFails") {
+    MuteSTDERR mute;
+
     auto p = MakeRedirPipeline({"cat"}, "/tmp/yash_redir_tests/GHOST_FILE.txt", "", false);
 
     int status = executor.RunPipeline(p);
@@ -112,6 +115,8 @@ TEST_CASE_FIXTURE(RedirectionTest, "InputFromNonExistentFileFails") {
 }
 
 TEST_CASE_FIXTURE(RedirectionTest, "OutputToReadOnlyFileFails") {
+    MuteSTDERR mute;
+
     auto p = MakeRedirPipeline({"echo", "hacker"}, "", no_perm_file, false);
 
     int status = executor.RunPipeline(p);
@@ -121,6 +126,8 @@ TEST_CASE_FIXTURE(RedirectionTest, "OutputToReadOnlyFileFails") {
 }
 
 TEST_CASE_FIXTURE(RedirectionTest, "OutputToDirectoryFails") {
+    MuteSTDERR mute;
+
     auto p = MakeRedirPipeline({"echo", "test"}, "", test_dir, false);
 
     int status = executor.RunPipeline(p);
