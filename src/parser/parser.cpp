@@ -3,7 +3,7 @@
 #include <optional>
 #include <variant>
 
-#include "tokenizer/tokenizer.hpp"
+#include "tokenizer/itokenizer.hpp"
 #include "utils/yash_error.hpp"
 
 std::optional<Pipeline> Parser::ParsePipeline() {

@@ -1,46 +1,15 @@
 #pragma once
+#include "itokenizer.hpp"
 
-#include <cstdint>
-#include <istream>
-#include <string>
-#include <variant>
-
-struct WordToken {
-    std::string value;
-
-    WordToken() = default;
-    WordToken(std::string val)
-        : value(std::move(val)) {
-    }
-
-    bool operator==(const std::string& other) const {
-        return this->value == other;
-    }
-
-    bool operator==(const WordToken& other) const {
-        return this->value == other.value;
-    };
-};
-
-enum struct RedirectToken : std::uint8_t { REDIRECT_OUT, REDIRECT_IN, REDIRECT_APPEND, HERE_DOC };
-
-struct PipeToken {
-    bool operator==(const PipeToken&) const {
-        return true;
-    };
-};
-
-using Token = std::variant<WordToken, RedirectToken, PipeToken>;
-
-class Tokenizer {
+class Tokenizer : public ITokenizer {
 public:
     Tokenizer(std::istream* in);
 
-    [[nodiscard]] bool IsEnd() const;
+    [[nodiscard]] bool IsEnd() const override;
 
-    void Next();
+    void Next() override;
 
-    Token GetToken();
+    Token GetToken() override;
 
 private:
     std::istream* original_data_;

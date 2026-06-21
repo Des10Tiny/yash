@@ -11,6 +11,7 @@ fetchcontent_makeavailable(doctest)
 set(TEST_SOURCES
     doctest_main.cpp
     tokenizer_tests.cpp
+    expander_test.cpp
     parser_tests.cpp
     scoped_pipe_test.cpp
     unique_fd_test.cpp

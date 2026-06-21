@@ -1,6 +1,6 @@
 #pragma once
 
-#include "tokenizer/tokenizer.hpp"
+#include "tokenizer/itokenizer.hpp"
 #include <optional>
 #include <string>
 #include <vector>
@@ -18,7 +18,7 @@ struct Pipeline {
 
 class Parser {
 public:
-    Parser(Tokenizer& tokenizer)
+    Parser(ITokenizer& tokenizer)
         : tokenizer_(tokenizer) {
     }
 
@@ -26,5 +26,5 @@ public:
 
 private:
     std::optional<Command> ParseCommand();
-    Tokenizer& tokenizer_;
+    ITokenizer& tokenizer_;
 };

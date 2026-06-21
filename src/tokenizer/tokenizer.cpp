@@ -2,6 +2,7 @@
 
 #include <cctype>
 #include <cstdio>
+#include <istream>
 #include <string>
 
 #include "utils/yash_error.hpp"

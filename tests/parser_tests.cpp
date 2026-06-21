@@ -3,6 +3,7 @@
 #include "doctest.h"
 #include "parser/parser.hpp"
 #include "utils/yash_error.hpp"
+#include "tokenizer/tokenizer.hpp"
 
 std::optional<Pipeline> ParseString(const std::string& input) {
     std::stringstream ss{input};
