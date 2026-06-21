@@ -1,33 +1,33 @@
 #include <fcntl.h>
-#include <gtest/gtest.h>
 #include <unistd.h>
 
+#include "doctest.h"
 #include "utils/scoped_pipe.hpp"
 
-TEST(ScopedFDTest, ClosesDescriptorOnDestruction) {
+TEST_CASE("ClosesDescriptorOnDestruction") {
     int pipe_fd[2];
-    ASSERT_EQ(pipe(pipe_fd), 0);
+    REQUIRE(pipe(pipe_fd) == 0);
 
     int read_fd = pipe_fd[0];
     int write_fd = pipe_fd[1];
 
     {
         ScopedPipe sfd{read_fd, write_fd};
-        EXPECT_EQ(sfd.GetRawReadFD(), read_fd);
-        EXPECT_EQ(sfd.GetRawWriteFD(), write_fd);
+        CHECK(sfd.GetRawReadFD() == read_fd);
+        CHECK(sfd.GetRawWriteFD() == write_fd);
     }
 
-    EXPECT_EQ(fcntl(read_fd, F_GETFD), -1);
-    EXPECT_EQ(errno, EBADF);
+    CHECK(fcntl(read_fd, F_GETFD) == -1);
+    CHECK(errno == EBADF);
 
-    EXPECT_EQ(fcntl(write_fd, F_GETFD), -1);
-    EXPECT_EQ(errno, EBADF);
+    CHECK(fcntl(write_fd, F_GETFD) == -1);
+    CHECK(errno == EBADF);
 }
 
-TEST(ScopedFDTest, MoveSemanticsWork) {
+TEST_CASE("MoveSemanticsWork") {
     int pipe_fd[2];
 
-    ASSERT_EQ(pipe(pipe_fd), 0);
+    REQUIRE(pipe(pipe_fd) == 0);
 
     int read_fd = pipe_fd[0];
     int write_fd = pipe_fd[1];
@@ -36,30 +36,30 @@ TEST(ScopedFDTest, MoveSemanticsWork) {
         ScopedPipe fd_1{read_fd, write_fd};
         ScopedPipe fd_2{std::move(fd_1)};
 
-        EXPECT_EQ(fd_1.GetRawReadFD(), -1);
-        EXPECT_EQ(fd_1.GetRawWriteFD(), -1);
+        CHECK(fd_1.GetRawReadFD() == -1);
+        CHECK(fd_1.GetRawWriteFD() == -1);
 
-        EXPECT_EQ(fd_2.GetRawReadFD(), read_fd);
-        EXPECT_EQ(fd_2.GetRawWriteFD(), write_fd);
+        CHECK(fd_2.GetRawReadFD() == read_fd);
+        CHECK(fd_2.GetRawWriteFD() == write_fd);
 
-        EXPECT_NE(fcntl(read_fd, F_GETFD), -1);
-        EXPECT_NE(errno, EBADF);
+        CHECK(fcntl(read_fd, F_GETFD) != -1);
+        CHECK(errno != EBADF);
 
-        EXPECT_NE(fcntl(write_fd, F_GETFD), -1);
-        EXPECT_NE(errno, EBADF);
+        CHECK(fcntl(write_fd, F_GETFD) != -1);
+        CHECK(errno != EBADF);
     }
 
-    EXPECT_EQ(fcntl(read_fd, F_GETFD), -1);
-    EXPECT_EQ(errno, EBADF);
+    CHECK(fcntl(read_fd, F_GETFD) == -1);
+    CHECK(errno == EBADF);
 
-    EXPECT_EQ(fcntl(write_fd, F_GETFD), -1);
-    EXPECT_EQ(errno, EBADF);
+    CHECK(fcntl(write_fd, F_GETFD) == -1);
+    CHECK(errno == EBADF);
 }
 
-TEST(ScopedFDTest, MoveSemanticsByFakeOperatorWork) {
+TEST_CASE("MoveSemanticsByFakeOperatorWork") {
     int pipe_fd[2];
 
-    ASSERT_EQ(pipe(pipe_fd), 0);
+    REQUIRE(pipe(pipe_fd) == 0);
 
     int read_fd = pipe_fd[0];
     int write_fd = pipe_fd[1];
@@ -67,30 +67,30 @@ TEST(ScopedFDTest, MoveSemanticsByFakeOperatorWork) {
     {
         ScopedPipe fd_2 = ScopedPipe{read_fd, write_fd};
 
-        EXPECT_NE(fcntl(read_fd, F_GETFD), -1);
-        EXPECT_NE(errno, EBADF);
+        CHECK(fcntl(read_fd, F_GETFD) != -1);
+        CHECK(errno != EBADF);
 
-        EXPECT_EQ(fd_2.GetRawReadFD(), read_fd);
-        EXPECT_EQ(fd_2.GetRawWriteFD(), write_fd);
+        CHECK(fd_2.GetRawReadFD() == read_fd);
+        CHECK(fd_2.GetRawWriteFD() == write_fd);
 
-        EXPECT_NE(fcntl(read_fd, F_GETFD), -1);
-        EXPECT_NE(errno, EBADF);
+        CHECK(fcntl(read_fd, F_GETFD) != -1);
+        CHECK(errno != EBADF);
 
-        EXPECT_NE(fcntl(write_fd, F_GETFD), -1);
-        EXPECT_NE(errno, EBADF);
+        CHECK(fcntl(write_fd, F_GETFD) != -1);
+        CHECK(errno != EBADF);
     }
 
-    EXPECT_EQ(fcntl(read_fd, F_GETFD), -1);
-    EXPECT_EQ(errno, EBADF);
+    CHECK(fcntl(read_fd, F_GETFD) == -1);
+    CHECK(errno == EBADF);
 
-    EXPECT_EQ(fcntl(write_fd, F_GETFD), -1);
-    EXPECT_EQ(errno, EBADF);
+    CHECK(fcntl(write_fd, F_GETFD) == -1);
+    CHECK(errno == EBADF);
 }
 
-TEST(ScopedFDTest, MoveAssignmentOperatorWorks) {
+TEST_CASE("MoveAssignmentOperatorWorks") {
     int pipe_fd[2];
 
-    ASSERT_EQ(pipe(pipe_fd), 0);
+    REQUIRE(pipe(pipe_fd) == 0);
 
     int read_fd = pipe_fd[0];
     int write_fd = pipe_fd[1];
@@ -101,22 +101,22 @@ TEST(ScopedFDTest, MoveAssignmentOperatorWorks) {
 
         fd_2 = std::move(fd_1);
 
-        EXPECT_EQ(fd_1.GetRawReadFD(), -1);
-        EXPECT_EQ(fd_1.GetRawWriteFD(), -1);
+        CHECK(fd_1.GetRawReadFD() == -1);
+        CHECK(fd_1.GetRawWriteFD() == -1);
 
-        EXPECT_EQ(fd_2.GetRawReadFD(), read_fd);
-        EXPECT_EQ(fd_2.GetRawWriteFD(), write_fd);
+        CHECK(fd_2.GetRawReadFD() == read_fd);
+        CHECK(fd_2.GetRawWriteFD() == write_fd);
 
-        EXPECT_NE(fcntl(read_fd, F_GETFD), -1);
-        EXPECT_NE(errno, EBADF);
+        CHECK(fcntl(read_fd, F_GETFD) != -1);
+        CHECK(errno != EBADF);
 
-        EXPECT_NE(fcntl(write_fd, F_GETFD), -1);
-        EXPECT_NE(errno, EBADF);
+        CHECK(fcntl(write_fd, F_GETFD) != -1);
+        CHECK(errno != EBADF);
     }
 
-    EXPECT_EQ(fcntl(read_fd, F_GETFD), -1);
-    EXPECT_EQ(errno, EBADF);
+    CHECK(fcntl(read_fd, F_GETFD) == -1);
+    CHECK(errno == EBADF);
 
-    EXPECT_EQ(fcntl(write_fd, F_GETFD), -1);
-    EXPECT_EQ(errno, EBADF);
+    CHECK(fcntl(write_fd, F_GETFD) == -1);
+    CHECK(errno == EBADF);
 }

@@ -1,196 +1,198 @@
+#include <sstream>
+
+#include "doctest.h"
 #include "tokenizer/tokenizer.hpp"
 #include "utils/yash_error.hpp"
-#include "gtest/gtest.h"
 
-TEST(TokenizerTest, SimpleCase) {
+TEST_CASE("SimpleCase") {
     std::stringstream ss{R"(ls | grep "somthing new")"};
     Tokenizer tokenizer{&ss};
 
-    EXPECT_FALSE(tokenizer.IsEnd());
-    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("ls")});
+    CHECK_FALSE(tokenizer.IsEnd());
+    CHECK(tokenizer.GetToken() == Token{WordToken("ls")});
 
     tokenizer.Next();
-    EXPECT_FALSE(tokenizer.IsEnd());
-    EXPECT_EQ(tokenizer.GetToken(), Token{PipeToken()});
+    CHECK_FALSE(tokenizer.IsEnd());
+    CHECK(tokenizer.GetToken() == Token{PipeToken()});
 
     tokenizer.Next();
-    EXPECT_FALSE(tokenizer.IsEnd());
-    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("grep")});
+    CHECK_FALSE(tokenizer.IsEnd());
+    CHECK(tokenizer.GetToken() == Token{WordToken("grep")});
 
     tokenizer.Next();
-    EXPECT_FALSE(tokenizer.IsEnd());
-    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("somthing new")});
+    CHECK_FALSE(tokenizer.IsEnd());
+    CHECK(tokenizer.GetToken() == Token{WordToken("somthing new")});
 
     tokenizer.Next();
-    EXPECT_TRUE(tokenizer.IsEnd());
+    CHECK(tokenizer.IsEnd());
 }
 
-TEST(TokenizerTest, IsStreaming) {
+TEST_CASE("IsStreaming") {
     std::stringstream ss;
     ss << "ls ";
     Tokenizer tokenizer{&ss};
-    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("ls")});
+    CHECK(tokenizer.GetToken() == Token{WordToken("ls")});
 
     ss << "| grep ";
     tokenizer.Next();
-    EXPECT_EQ(tokenizer.GetToken(), Token{PipeToken{}});
+    CHECK(tokenizer.GetToken() == Token{PipeToken{}});
 
     tokenizer.Next();
-    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("grep")});
+    CHECK(tokenizer.GetToken() == Token{WordToken("grep")});
 
     tokenizer.Next();
-    EXPECT_TRUE(tokenizer.IsEnd());
+    CHECK(tokenizer.IsEnd());
 }
 
-TEST(TokenizerTest, Redirections) {
+TEST_CASE("Redirections") {
     std::stringstream ss{R"(cat < in.txt > out.txt >> append.txt)"};
     Tokenizer tokenizer{&ss};
 
-    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("cat")});
+    CHECK(tokenizer.GetToken() == Token{WordToken("cat")});
 
     tokenizer.Next();
-    EXPECT_EQ(tokenizer.GetToken(), Token{RedirectToken::REDIRECT_IN});
+    CHECK(tokenizer.GetToken() == Token{RedirectToken::REDIRECT_IN});
 
     tokenizer.Next();
-    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("in.txt")});
+    CHECK(tokenizer.GetToken() == Token{WordToken("in.txt")});
 
     tokenizer.Next();
-    EXPECT_EQ(tokenizer.GetToken(), Token{RedirectToken::REDIRECT_OUT});
+    CHECK(tokenizer.GetToken() == Token{RedirectToken::REDIRECT_OUT});
 
     tokenizer.Next();
-    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("out.txt")});
+    CHECK(tokenizer.GetToken() == Token{WordToken("out.txt")});
 
     tokenizer.Next();
-    EXPECT_EQ(tokenizer.GetToken(), Token{RedirectToken::REDIRECT_APPEND});
+    CHECK(tokenizer.GetToken() == Token{RedirectToken::REDIRECT_APPEND});
 
     tokenizer.Next();
-    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("append.txt")});
+    CHECK(tokenizer.GetToken() == Token{WordToken("append.txt")});
 
     tokenizer.Next();
-    EXPECT_TRUE(tokenizer.IsEnd());
+    CHECK(tokenizer.IsEnd());
 }
 
-TEST(TokenizerTest, GetTokenIsNotMoving) {
+TEST_CASE("GetTokenIsNotMoving") {
     std::stringstream ss{"ls grep"};
     Tokenizer tokenizer{&ss};
 
-    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("ls")});
-    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("ls")});
+    CHECK(tokenizer.GetToken() == Token{WordToken("ls")});
+    CHECK(tokenizer.GetToken() == Token{WordToken("ls")});
 
     tokenizer.Next();
-    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("grep")});
-    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("grep")});
+    CHECK(tokenizer.GetToken() == Token{WordToken("grep")});
+    CHECK(tokenizer.GetToken() == Token{WordToken("grep")});
 
     tokenizer.Next();
-    EXPECT_TRUE(tokenizer.IsEnd());
+    CHECK(tokenizer.IsEnd());
 }
 
-TEST(TokenizerTest, SpacesAreHandled) {
+TEST_CASE("SpacesAreHandled") {
     std::stringstream ss{"    "};
     Tokenizer tokenizer{&ss};
-    EXPECT_TRUE(tokenizer.IsEnd());
+    CHECK(tokenizer.IsEnd());
 
     std::stringstream ss2{"  ls   |  grep  "};
     Tokenizer t2{&ss2};
 
-    EXPECT_EQ(t2.GetToken(), Token{WordToken("ls")});
+    CHECK(t2.GetToken() == Token{WordToken("ls")});
 
     t2.Next();
-    EXPECT_EQ(t2.GetToken(), Token{PipeToken()});
+    CHECK(t2.GetToken() == Token{PipeToken()});
 
     t2.Next();
-    EXPECT_EQ(t2.GetToken(), Token{WordToken("grep")});
+    CHECK(t2.GetToken() == Token{WordToken("grep")});
 
     tokenizer.Next();
-    EXPECT_TRUE(tokenizer.IsEnd());
+    CHECK(tokenizer.IsEnd());
 }
 
-TEST(TokenizerTest, EmptyString) {
+TEST_CASE("EmptyString") {
     std::stringstream ss;
     Tokenizer tokenizer{&ss};
 
-    EXPECT_TRUE(tokenizer.IsEnd());
+    CHECK(tokenizer.IsEnd());
 }
 
-TEST(TokenizerTest, NoSpaceNoDouble) {
+TEST_CASE("NoSpaceNoDouble") {
     std::stringstream ss{"ls>trash.json"};
     Tokenizer tokenizer{&ss};
-    EXPECT_FALSE(tokenizer.IsEnd());
+    CHECK_FALSE(tokenizer.IsEnd());
 
-    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("ls")});
-    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("ls")});
-    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("ls")});
-
-    tokenizer.Next();
-    EXPECT_EQ(tokenizer.GetToken(), Token{RedirectToken::REDIRECT_OUT});
+    CHECK(tokenizer.GetToken() == Token{WordToken("ls")});
+    CHECK(tokenizer.GetToken() == Token{WordToken("ls")});
+    CHECK(tokenizer.GetToken() == Token{WordToken("ls")});
 
     tokenizer.Next();
-    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken{"trash.json"}});
+    CHECK(tokenizer.GetToken() == Token{RedirectToken::REDIRECT_OUT});
 
     tokenizer.Next();
-    EXPECT_TRUE(tokenizer.IsEnd());
+    CHECK(tokenizer.GetToken() == Token{WordToken{"trash.json"}});
+
+    tokenizer.Next();
+    CHECK(tokenizer.IsEnd());
 }
 
-TEST(TokenizerTest, InsideQuotesNoSplit) {
+TEST_CASE("InsideQuotesNoSplit") {
     std::stringstream ss{R"(echo "hello | grep")"};
     Tokenizer tokenizer{&ss};
-    EXPECT_FALSE(tokenizer.IsEnd());
+    CHECK_FALSE(tokenizer.IsEnd());
 
-    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("echo")});
-    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("echo")});
-    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken("echo")});
+    CHECK(tokenizer.GetToken() == Token{WordToken("echo")});
+    CHECK(tokenizer.GetToken() == Token{WordToken("echo")});
+    CHECK(tokenizer.GetToken() == Token{WordToken("echo")});
 
-    EXPECT_FALSE(tokenizer.IsEnd());
-
-    tokenizer.Next();
-    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken{"hello | grep"}});
-    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken{"hello | grep"}});
-    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken{"hello | grep"}});
+    CHECK_FALSE(tokenizer.IsEnd());
 
     tokenizer.Next();
-    EXPECT_TRUE(tokenizer.IsEnd());
-    EXPECT_TRUE(tokenizer.IsEnd());
-    EXPECT_EQ(tokenizer.GetToken(), Token{WordToken{"hello | grep"}});
-    EXPECT_TRUE(tokenizer.IsEnd());
+    CHECK(tokenizer.GetToken() == Token{WordToken{"hello | grep"}});
+    CHECK(tokenizer.GetToken() == Token{WordToken{"hello | grep"}});
+    CHECK(tokenizer.GetToken() == Token{WordToken{"hello | grep"}});
+
+    tokenizer.Next();
+    CHECK(tokenizer.IsEnd());
+    CHECK(tokenizer.IsEnd());
+    CHECK(tokenizer.GetToken() == Token{WordToken{"hello | grep"}});
+    CHECK(tokenizer.IsEnd());
 }
 
-TEST(TokenizerTest, EmptyQuotes) {
+TEST_CASE("EmptyQuotes") {
     std::stringstream ss{R"(echo "")"};
     Tokenizer t{&ss};
 
-    EXPECT_EQ(t.GetToken(), Token{WordToken("echo")});
+    CHECK(t.GetToken() == Token{WordToken("echo")});
 
     t.Next();
-    EXPECT_EQ(t.GetToken(), Token{WordToken("")});
+    CHECK(t.GetToken() == Token{WordToken("")});
 
     t.Next();
-    EXPECT_TRUE(t.IsEnd());
+    CHECK(t.IsEnd());
 }
 
-TEST(TokenizerTest, MixedQuotesSingleWord) {
+TEST_CASE("MixedQuotesSingleWord") {
     std::stringstream ss{R"(echo "hello"world'!')"};
     Tokenizer t{&ss};
 
-    EXPECT_EQ(t.GetToken(), Token{WordToken("echo")});
+    CHECK(t.GetToken() == Token{WordToken("echo")});
 
     t.Next();
-    EXPECT_EQ(t.GetToken(), Token{WordToken("helloworld!")});
+    CHECK(t.GetToken() == Token{WordToken("helloworld!")});
 }
 
-TEST(TokenizerTest, UnclosedDoubleQuoteThrows) {
+TEST_CASE("UnclosedDoubleQuoteThrows") {
     std::stringstream ss{R"(echo "this is unclosed)"};
     Tokenizer t{&ss};
 
-    EXPECT_EQ(t.GetToken(), Token{WordToken("echo")});
+    CHECK(t.GetToken() == Token{WordToken("echo")});
 
-    EXPECT_THROW(t.Next(), YashSyntaxError);
+    CHECK_THROWS_AS(t.Next(), YashSyntaxError);
 }
 
-TEST(TokenizerTest, UnclosedSingleQuoteThrows) {
+TEST_CASE("UnclosedSingleQuoteThrows") {
     std::stringstream ss{R"(echo 'this is unclosed)"};
     Tokenizer t{&ss};
 
-    EXPECT_EQ(t.GetToken(), Token{WordToken("echo")});
+    CHECK(t.GetToken() == Token{WordToken("echo")});
 
-    EXPECT_THROW(t.Next(), YashSyntaxError);
+    CHECK_THROWS_AS(t.Next(), YashSyntaxError);
 }

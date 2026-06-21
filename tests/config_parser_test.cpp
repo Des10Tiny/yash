@@ -1,7 +1,7 @@
-#include <cstdio>
+#include <filesystem>
 #include <fstream>
-#include <gtest/gtest.h>
 
+#include "doctest.h"
 #include "utils/config_parser.hpp"
 
 void CreateTestConfig(const std::string& filename, const std::string& content) {
@@ -10,40 +10,41 @@ void CreateTestConfig(const std::string& filename, const std::string& content) {
     file.close();
 }
 
-class ConfigParserTest : public ::testing::Test {
+class ConfigParserTest {
 protected:
     const std::string test_filename = "test_yash.conf";
 
-    void TearDown() override {
-        std::remove(test_filename.c_str());
+    ~ConfigParserTest() {
+        std::error_code ec;
+        std::filesystem::remove(test_filename, ec);
     }
 };
 
-TEST_F(ConfigParserTest, NoFileReturnsDefaults) {
+TEST_CASE_FIXTURE(ConfigParserTest, "NoFileReturnsDefaults") {
     ConfigParser parser;
     YashConfig config = parser.Parse("non_existent_file.conf");
 
-    EXPECT_EQ(config.log_level, LogLevel::NONE);
-    EXPECT_TRUE(config.aliases.empty());
+    CHECK(config.log_level == LogLevel::NONE);
+    CHECK(config.aliases.empty());
 }
 
-TEST_F(ConfigParserTest, ParsesLogLevels) {
+TEST_CASE_FIXTURE(ConfigParserTest, "ParsesLogLevels") {
     ConfigParser parser;
 
     CreateTestConfig(test_filename, "loglevel=debug\n");
-    EXPECT_EQ(parser.Parse(test_filename).log_level, LogLevel::DEBUG);
+    CHECK(parser.Parse(test_filename).log_level == LogLevel::DEBUG);
 
     CreateTestConfig(test_filename, "loglevel=info\n");
-    EXPECT_EQ(parser.Parse(test_filename).log_level, LogLevel::INFO);
+    CHECK(parser.Parse(test_filename).log_level == LogLevel::INFO);
 
     CreateTestConfig(test_filename, "loglevel=warning\n");
-    EXPECT_EQ(parser.Parse(test_filename).log_level, LogLevel::WARNING);
+    CHECK(parser.Parse(test_filename).log_level == LogLevel::WARNING);
 
     CreateTestConfig(test_filename, "loglevel=fatal\n");
-    EXPECT_EQ(parser.Parse(test_filename).log_level, LogLevel::FATAL);
+    CHECK(parser.Parse(test_filename).log_level == LogLevel::FATAL);
 }
 
-TEST_F(ConfigParserTest, IgnoresCommentsAndEmptyLines) {
+TEST_CASE_FIXTURE(ConfigParserTest, "IgnoresCommentsAndEmptyLines") {
     std::string content = "# This is a comment\n"
                           "\n"
                           "loglevel=info\n"
@@ -55,12 +56,12 @@ TEST_F(ConfigParserTest, IgnoresCommentsAndEmptyLines) {
     ConfigParser parser;
     YashConfig config = parser.Parse(test_filename);
 
-    EXPECT_EQ(config.log_level, LogLevel::INFO);
-    EXPECT_EQ(config.aliases.size(), 1);
-    EXPECT_EQ(config.aliases["ll"], "ls -la");
+    CHECK(config.log_level == LogLevel::INFO);
+    CHECK(config.aliases.size() == 1);
+    CHECK(config.aliases["ll"] == "ls -la");
 }
 
-TEST_F(ConfigParserTest, ParsesAliases) {
+TEST_CASE_FIXTURE(ConfigParserTest, "ParsesAliases") {
     std::string content = "alias.ll=ls -la\n"
                           "alias.go=cd\n"
                           "alias.g=git status\n";
@@ -69,13 +70,13 @@ TEST_F(ConfigParserTest, ParsesAliases) {
     ConfigParser parser;
     YashConfig config = parser.Parse(test_filename);
 
-    EXPECT_EQ(config.aliases.size(), 3);
-    EXPECT_EQ(config.aliases["ll"], "ls -la");
-    EXPECT_EQ(config.aliases["go"], "cd");
-    EXPECT_EQ(config.aliases["g"], "git status");
+    CHECK(config.aliases.size() == 3);
+    CHECK(config.aliases["ll"] == "ls -la");
+    CHECK(config.aliases["go"] == "cd");
+    CHECK(config.aliases["g"] == "git status");
 }
 
-TEST_F(ConfigParserTest, IgnoresUnknownKeysGracefully) {
+TEST_CASE_FIXTURE(ConfigParserTest, "IgnoresUnknownKeysGracefully") {
     std::string content = "loglevel=debug\n"
                           "some_weird_setting=42\n"
                           "color=red\n";
@@ -83,14 +84,14 @@ TEST_F(ConfigParserTest, IgnoresUnknownKeysGracefully) {
     CreateTestConfig(test_filename, content);
     ConfigParser parser;
 
-    EXPECT_NO_THROW({
+    CHECK_NOTHROW({
         YashConfig config = parser.Parse(test_filename);
-        EXPECT_EQ(config.log_level, LogLevel::DEBUG);
-        EXPECT_TRUE(config.aliases.empty());
+        CHECK(config.log_level == LogLevel::DEBUG);
+        CHECK(config.aliases.empty());
     });
 }
 
-TEST_F(ConfigParserTest, CollectsWarningsForUnknownKeys) {
+TEST_CASE_FIXTURE(ConfigParserTest, "CollectsWarningsForUnknownKeys") {
     std::string content = "loglevel=debug\n"
                           "some_weird_setting=42\n"
                           "another_typo=1\n";
@@ -99,6 +100,6 @@ TEST_F(ConfigParserTest, CollectsWarningsForUnknownKeys) {
     ConfigParser parser;
     YashConfig config = parser.Parse(test_filename);
 
-    EXPECT_EQ(config.log_level, LogLevel::DEBUG);
-    EXPECT_EQ(config.load_warnings.size(), 2);
+    CHECK(config.log_level == LogLevel::DEBUG);
+    CHECK(config.load_warnings.size() == 2);
 }

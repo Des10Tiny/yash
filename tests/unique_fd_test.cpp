@@ -1,12 +1,12 @@
+#include "doctest.h"
 #include "utils/unique_fd.hpp"
 
 #include <cstdio>
 #include <fcntl.h>
 #include <filesystem>
-#include <gtest/gtest.h>
 #include <unistd.h>
 
-class UniqueFDTest : public ::testing::Test {
+class UniqueFDTest {
 protected:
     bool IsDescriptorValid(int fd) {
         if (fd < 0) {
@@ -16,31 +16,31 @@ protected:
     }
 };
 
-TEST_F(UniqueFDTest, ClosesDescriptorOnDestruction) {
+TEST_CASE_FIXTURE(UniqueFDTest, "ClosesDescriptorOnDestruction") {
     int raw_fd = open("/dev/null", O_RDONLY);
-    ASSERT_GT(raw_fd, 0);
+    REQUIRE(raw_fd > 0);
     {
         UniqueFD ufd{raw_fd};
-        EXPECT_EQ(ufd.GetRawFD(), raw_fd);
-        EXPECT_TRUE(IsDescriptorValid(raw_fd));
+        CHECK(ufd.GetRawFD() == raw_fd);
+        CHECK(IsDescriptorValid(raw_fd));
     }
 
-    EXPECT_FALSE(IsDescriptorValid(raw_fd));
-    EXPECT_EQ(errno, EBADF);
+    CHECK_FALSE(IsDescriptorValid(raw_fd));
+    CHECK(errno == EBADF);
 }
 
-TEST_F(UniqueFDTest, MoveConstructorTransfersOwnership) {
+TEST_CASE_FIXTURE(UniqueFDTest, "MoveConstructorTransfersOwnership") {
     int raw_fd = open("/dev/null", O_RDONLY);
     UniqueFD ufd1{raw_fd};
 
     UniqueFD ufd2{std::move(ufd1)};
 
-    EXPECT_EQ(ufd1.GetRawFD(), -1);
-    EXPECT_EQ(ufd2.GetRawFD(), raw_fd);
-    EXPECT_TRUE(IsDescriptorValid(raw_fd));
+    CHECK(ufd1.GetRawFD() == -1);
+    CHECK(ufd2.GetRawFD() == raw_fd);
+    CHECK(IsDescriptorValid(raw_fd));
 }
 
-TEST_F(UniqueFDTest, MoveAssignmentClosesCurrentAndTakesNew) {
+TEST_CASE_FIXTURE(UniqueFDTest, "MoveAssignmentClosesCurrentAndTakesNew") {
     int fd1 = open("/dev/null", O_RDONLY);
     int fd2 = open("/dev/null", O_RDONLY);
 
@@ -50,37 +50,37 @@ TEST_F(UniqueFDTest, MoveAssignmentClosesCurrentAndTakesNew) {
 
         ufd2 = std::move(ufd1);
 
-        EXPECT_FALSE(IsDescriptorValid(fd2));
-        EXPECT_EQ(ufd2.GetRawFD(), fd1);
-        EXPECT_EQ(ufd1.GetRawFD(), -1);
+        CHECK_FALSE(IsDescriptorValid(fd2));
+        CHECK(ufd2.GetRawFD() == fd1);
+        CHECK(ufd1.GetRawFD() == -1);
     }
 
-    EXPECT_FALSE(IsDescriptorValid(fd1));
+    CHECK_FALSE(IsDescriptorValid(fd1));
 }
 
-TEST_F(UniqueFDTest, SelfAssignmentDoesNothing) {
+TEST_CASE_FIXTURE(UniqueFDTest, "SelfAssignmentDoesNothing") {
     int raw_fd = open("/dev/null", O_RDONLY);
     UniqueFD ufd{raw_fd};
 
     ufd = std::move(ufd);
 
-    EXPECT_EQ(ufd.GetRawFD(), raw_fd);
-    EXPECT_TRUE(IsDescriptorValid(raw_fd));
+    CHECK(ufd.GetRawFD() == raw_fd);
+    CHECK(IsDescriptorValid(raw_fd));
 }
 
-TEST_F(UniqueFDTest, CreateNewFDPensFileCorrectly) {
+TEST_CASE_FIXTURE(UniqueFDTest, "CreateNewFDPensFileCorrectly") {
     UniqueFD ufd;
 
-    ASSERT_NO_THROW((void)ufd.CreateNewFD("/dev/null", O_RDONLY));
+    REQUIRE_NOTHROW((void)ufd.CreateNewFD("/dev/null", O_RDONLY));
 
     int fd = ufd.GetRawFD();
-    EXPECT_GT(fd, 0);
-    EXPECT_TRUE(IsDescriptorValid(fd));
+    CHECK(fd > 0);
+    CHECK(IsDescriptorValid(fd));
 }
 
-TEST_F(UniqueFDTest, CreateNewFDClosesPreviousDescriptor) {
+TEST_CASE_FIXTURE(UniqueFDTest, "CreateNewFDClosesPreviousDescriptor") {
     int first_fd = open("/dev/null", O_RDONLY);
-    ASSERT_GT(first_fd, 0);
+    REQUIRE(first_fd > 0);
 
     UniqueFD ufd{first_fd};
 
@@ -90,40 +90,40 @@ TEST_F(UniqueFDTest, CreateNewFDClosesPreviousDescriptor) {
     close(dummy_fd);
 }
 
-TEST_F(UniqueFDTest, CreateNewFDNoThrowsOnInvalidFile) {
+TEST_CASE_FIXTURE(UniqueFDTest, "CreateNewFDNoThrowsOnInvalidFile") {
     UniqueFD ufd;
 
     bool status = true;
-    EXPECT_NO_THROW(status = ufd.CreateNewFD("/non_existent_file_12345", O_RDONLY));
+    CHECK_NOTHROW(status = ufd.CreateNewFD("/non_existent_file_12345", O_RDONLY));
 
-    EXPECT_EQ(status, false);
-    EXPECT_EQ(ufd.GetRawFD(), -1);
+    CHECK(status == false);
+    CHECK(ufd.GetRawFD() == -1);
 }
 
-TEST_F(UniqueFDTest, CloseFDResetsState) {
+TEST_CASE_FIXTURE(UniqueFDTest, "CloseFDResetsState") {
     int raw_fd = open("/dev/null", O_RDONLY);
     UniqueFD ufd{raw_fd};
 
     ufd.CloseFD();
 
-    EXPECT_EQ(ufd.GetRawFD(), -1);
-    EXPECT_FALSE(IsDescriptorValid(raw_fd));
+    CHECK(ufd.GetRawFD() == -1);
+    CHECK_FALSE(IsDescriptorValid(raw_fd));
 }
 
-TEST_F(UniqueFDTest, MultipleMovesWork) {
+TEST_CASE_FIXTURE(UniqueFDTest, "MultipleMovesWork") {
     UniqueFD ufd1{open("/dev/null", O_RDONLY)};
     int raw_fd = ufd1.GetRawFD();
 
     UniqueFD ufd2 = std::move(ufd1);
     UniqueFD ufd3 = std::move(ufd2);
 
-    EXPECT_EQ(ufd1.GetRawFD(), -1);
-    EXPECT_EQ(ufd2.GetRawFD(), -1);
-    EXPECT_EQ(ufd3.GetRawFD(), raw_fd);
-    EXPECT_TRUE(IsDescriptorValid(raw_fd));
+    CHECK(ufd1.GetRawFD() == -1);
+    CHECK(ufd2.GetRawFD() == -1);
+    CHECK(ufd3.GetRawFD() == raw_fd);
+    CHECK(IsDescriptorValid(raw_fd));
 }
 
-TEST_F(UniqueFDTest, DestructorClosesFileDescriptor) {
+TEST_CASE_FIXTURE(UniqueFDTest, "DestructorClosesFileDescriptor") {
     int raw_fd_copy = -1;
     const char* test_file = "/tmp/yash_fd_test.txt";
 
@@ -134,20 +134,20 @@ TEST_F(UniqueFDTest, DestructorClosesFileDescriptor) {
     {
         UniqueFD ufd;
         bool status = ufd.CreateNewFD(test_file, O_RDONLY);
-        ASSERT_TRUE(status);
+        REQUIRE(status);
 
         raw_fd_copy = ufd.GetRawFD();
-        ASSERT_GT(raw_fd_copy, 2);
+        REQUIRE(raw_fd_copy > 2);
 
         char buf[1];
-        EXPECT_EQ(read(raw_fd_copy, buf, 1), 1);
+        CHECK(read(raw_fd_copy, buf, 1) == 1);
     }
 
     char buf[1];
     ssize_t read_result = read(raw_fd_copy, buf, 1);
 
-    EXPECT_EQ(read_result, -1);
-    EXPECT_EQ(errno, EBADF);
+    CHECK(read_result == -1);
+    CHECK(errno == EBADF);
 
     std::filesystem::remove(test_file);
 }
