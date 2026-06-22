@@ -5,8 +5,10 @@
 #include <iostream>
 #include <sstream>
 
+#include "expander/expander.hpp"
 #include "parser/parser.hpp"
 #include "tokenizer/tokenizer.hpp"
+#include "utils/config_parser.hpp"
 #include "utils/logger.hpp"
 #include "utils/yash_error.hpp"
 
@@ -141,7 +143,8 @@ void Yash::ProcessLine(const std::string& line) {
 
     try {
         Tokenizer tokenizer{&ss};
-        Parser parser{tokenizer};
+        Expander expander{tokenizer, config_.aliases};
+        Parser parser{expander};
 
         if (auto pipeline = parser.ParsePipeline()) {
             last_exit_status_ = executor_.RunPipeline(*pipeline);

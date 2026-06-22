@@ -12,10 +12,12 @@ public:
     )
         : base_tokenizer_(base_tokenizer)
         , aliases_(aliases) {
-            current_token_ = base_tokenizer_.GetToken();
-        };
+        RunLogic();
+    };
 
     ~Expander() override = default;
+
+    void RunLogic();
 
     [[nodiscard]] bool IsEnd() const override;
 
@@ -29,6 +31,7 @@ private:
 
     std::deque<Token> buffer_;
     bool is_command_position_ = true;
+    bool is_waiting_for_redirect_target_ = false;
 
     Token current_token_;
     bool is_end_ = false;
