@@ -1,19 +1,18 @@
-# Release v0.5.0: I/O Redirection, Builtins & Core Architecture
+# Release v0.6.0: The Alias Engine & Test Infrastructure Overhaul
 
 ## Summary
 
-This release marks a massive architectural shift for `yash`. The monolithic `main.cpp` has been completely dismantled and rebuilt into a robust, object-oriented `Yash` application class. Alongside the architectural overhaul, the Execution Engine has been expanded to support full POSIX I/O redirections (`>`, `<`, `>>`) and essential shell builtins (`cd`, `exit`). We also heavily reinforced the safety of system calls using strict RAII patterns for file descriptors to guarantee leak-free process forking.
+This release introduces a powerful, POSIX-compliant Alias Expansion Engine (`Expander`) and marks a complete overhaul of our testing infrastructure. We successfully decoupled the Tokenizer from the Parser by introducing an abstraction layer, allowing us to safely process aliases via lazy evaluation. Additionally, we migrated the entire test suite to `doctest` for faster, lighter, and more reliable testing, while fortifying the CI/CD environment compatibility.
 
 ## 🚀 Added
 
-- **I/O Redirections:** The `Executor` now natively handles standard input/output redirections (`>`, `<`, `>>`). It accurately maps bitwise flags (e.g., `O_TRUNC`, `O_APPEND`) and safely manages POSIX permissions during file creation.
-- **Core Builtins:** Implemented the first native shell builtins: `cd` for directory navigation and `exit` for graceful termination (throwing a structured `YashExitException` to unwind the stack safely).
-- **Object-Oriented Shell Architecture:** Encapsulated the entire REPL lifecycle, signal handling, and state management into the `Yash` class. `main.cpp` is now a minimal 20-line entry point dedicated solely to bootstrapping and fatal error catching.
-- **XDG Base Directory Compliance:** `yash` now adheres to modern Unix standards, automatically generating and loading its configuration and logs from `~/.config/yash/` instead of cluttering the user's home directory.
+- **Alias Expansion Engine:** Implemented the `Expander` class, seamlessly integrated as an `ITokenizer` decorator. It dynamically evaluates command aliases, correctly identifying "command positions" and respecting boundaries like pipes (`|`) and I/O redirections (`>`, `<`).
+- **Lazy Evaluation via Deque:** The `Expander` utilizes an internal `std::deque<Token>` buffer to expand aliases into mini-token streams on the fly. This avoids expensive string concatenations, protects quotes/escaping from being lost, and prevents OOM issues via zero-allocation moves (`std::move`).
+- **Doctest Integration:** Completely replaced the heavy GTest framework with `doctest`. Tests are now significantly faster to compile and run.
+- **VS Code TestMate Support:** Pre-configured workspace settings (`.vscode/settings.json`) to isolate test discovery per CMake preset, resolving duplicate test executions and UI clutter in the IDE.
 
 ## 🔧 Changed
 
-- **Strict RAII for File Descriptors:** Introduced the `UniqueFD` wrapper alongside the existing `ScopedPipe`. File descriptors are now guaranteed to close when going out of scope.
-- **Fork-Safe Error Handling:** Enforced strict `noexcept` and non-throwing paradigms inside child processes (`pid == 0`). System call failures (like `open()` or `dup2()`) inside a fork now safely trigger `_Exit(1)` instead of throwing C++ exceptions, preventing catastrophic `std::terminate` crashes.
-- **Logger Resilience:** The logging system now gracefully handles `LogLevel::NONE` without creating empty files on the disk, and safely recovers if it lacks permissions to write to the config directory.
-- **Integration Testing Isolation:** Upgraded the GTest suite to intercept `std::cin` / `std::cout` for full-app integration tests. Implemented environment variable spoofing (`setenv("HOME")`) to ensure config tests run in isolated temporary directories without overwriting the developer's actual configs.
+- **Tokenizer/Parser Abstraction:** Abstracted the tokenizer into an `ITokenizer` interface. The Parser no longer depends on a concrete tokenizer, enabling endless possibilities for future stream decorators (e.g., Variable Expansion, Globbing).
+- **Hardened System Tests:** E2E and integration tests handling POSIX file permissions now verify user privileges (`geteuid() == 0`). This prevents tests from falsely failing when executed in root environments (like Docker containers or CI runners) where kernel access checks are bypassed.
+- **Safe Variant Handling:** Upgraded token processing to utilize modern C++17 `std::variant` patterns (`std::holds_alternative`, `std::get_if`), completely eliminating undefined behaviors related to empty aliases and ensuring strong type safety across the AST.
