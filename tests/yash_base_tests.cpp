@@ -100,3 +100,13 @@ TEST_CASE_FIXTURE(YashTest, "ConfigAutoGeneration") {
 
     std::filesystem::remove_all(temp_home);
 }
+
+TEST_CASE_FIXTURE(YashTest, "E2E: Alias Pipeline Execution") {
+    std::string output;
+
+    std::string input = "alias mycmd=\"true | false\"\nmycmd\nexit\n";
+
+    int code = RunWithInput(input, output);
+
+    CHECK(code == 0);
+}
