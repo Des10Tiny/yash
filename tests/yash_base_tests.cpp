@@ -102,6 +102,8 @@ TEST_CASE_FIXTURE(YashTest, "ConfigAutoGeneration") {
 }
 
 TEST_CASE_FIXTURE(YashTest, "E2E: Alias Pipeline Execution") {
+    MuteSTDERR mute;
+
     std::string output;
 
     std::string input = "alias mycmd=\"true | false\"\nmycmd\nexit\n";
