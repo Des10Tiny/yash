@@ -1,10 +1,13 @@
 #include "core/yash.hpp"
+#include "doctest.h"
+#include "utils/mute_tests.hpp"
 #include "utils/yash_error.hpp"
-#include <gtest/gtest.h>
+
+#include <iostream>
 #include <sstream>
 #include <string>
 
-class YashTest : public ::testing::Test {
+class YashTest {
 protected:
     int RunWithInput(const std::string& input_text, std::string& output_text) {
         std::stringstream fake_in(input_text);
@@ -33,41 +36,43 @@ protected:
     }
 };
 
-TEST_F(YashTest, ExitCommandTerminatesShell) {
+TEST_CASE_FIXTURE(YashTest, "ExitCommandTerminatesShell") {
     std::string output;
     int code = RunWithInput("exit\n", output);
-    EXPECT_EQ(code, 0);
-    EXPECT_TRUE(output.find("Bye!") != std::string::npos);
+    CHECK(code == 0);
+    CHECK(output.find("Bye!") != std::string::npos);
 }
 
-TEST_F(YashTest, EmptyInputDoesNotCrash) {
+TEST_CASE_FIXTURE(YashTest, "EmptyInputDoesNotCrash") {
     std::string output;
 
     int code = RunWithInput("\n\n   \nexit\n", output);
-    EXPECT_EQ(code, 0);
+    CHECK(code == 0);
 
     int curr_pos = 0;
     for (int i = 0; i < 4; ++i) {
         curr_pos = output.find("yash>", curr_pos);
-        EXPECT_TRUE(curr_pos != std::string::npos);
+        CHECK(curr_pos != std::string::npos);
     }
 }
 
-TEST_F(YashTest, UnknownCommandPrintsError) {
+TEST_CASE_FIXTURE(YashTest, "UnknownCommandPrintsError") {
+    MuteSTDERR mute;
+
     std::string output;
 
     int code = RunWithInput("some_random_garbage_command\nexit\n", output);
-    EXPECT_EQ(code, 0);
+    CHECK(code == 0);
 }
 
-TEST_F(YashTest, ExitWithCode) {
+TEST_CASE_FIXTURE(YashTest, "ExitWithCode") {
     std::string output;
     int code = RunWithInput("exit 42\n", output);
 
-    EXPECT_EQ(code, 42);
+    CHECK(code == 42);
 }
 
-TEST_F(YashTest, ConfigAutoGeneration) {
+TEST_CASE_FIXTURE(YashTest, "ConfigAutoGeneration") {
     std::filesystem::path temp_home = std::filesystem::temp_directory_path() / "yash_test_home";
     std::filesystem::remove_all(temp_home);
     std::filesystem::create_directories(temp_home);
@@ -85,8 +90,8 @@ TEST_F(YashTest, ConfigAutoGeneration) {
 
     std::filesystem::path expected_config = temp_home / ".config" / "yash" / "yash.conf";
 
-    EXPECT_TRUE(output.find("created default config") != std::string::npos);
-    EXPECT_TRUE(std::filesystem::exists(expected_config));
+    CHECK(output.find("created default config") != std::string::npos);
+    CHECK(std::filesystem::exists(expected_config));
 
     setenv("HOME", old_home.c_str(), 1);
     if (had_xdg) {
@@ -94,4 +99,14 @@ TEST_F(YashTest, ConfigAutoGeneration) {
     }
 
     std::filesystem::remove_all(temp_home);
+}
+
+TEST_CASE_FIXTURE(YashTest, "E2E: Alias Pipeline Execution") {
+    std::string output;
+
+    std::string input = "alias mycmd=\"true | false\"\nmycmd\nexit\n";
+
+    int code = RunWithInput(input, output);
+
+    CHECK(code == 0);
 }

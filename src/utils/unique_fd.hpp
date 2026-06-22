@@ -1,3 +1,5 @@
+#pragma once
+
 #include "utils/logger.hpp"
 
 #include <fcntl.h>
@@ -6,11 +8,11 @@
 
 class UniqueFD {
 public:
-    explicit UniqueFD() {
+    explicit UniqueFD() noexcept {
         opened_fd_ = -1;
     }
 
-    explicit UniqueFD(int opened_fd)
+    explicit UniqueFD(int opened_fd) noexcept
         : opened_fd_(opened_fd) {
     }
 
@@ -30,12 +32,12 @@ public:
         return *this;
     };
 
-    ~UniqueFD() {
+    ~UniqueFD() noexcept {
         LOG_DEBUG("~UniqueFD(): ScopedFD - call destructor");
         CloseFD();
     }
 
-    void CloseFD() {
+    void CloseFD() noexcept {
         if (opened_fd_ != -1) {
             if (close(opened_fd_) == -1) {
                 LOG_WARN(
@@ -49,7 +51,7 @@ public:
 
     template <typename... Args>
     [[nodiscard("You must verify if FD was actually created before using it")]] bool
-    CreateNewFD(Args&&... args) {
+    CreateNewFD(Args&&... args) noexcept {
         CloseFD();
 
         int fd = open(std::forward<Args>(args)...);
@@ -65,7 +67,7 @@ public:
         return true;
     }
 
-    [[nodiscard]] int GetRawFD() const {
+    [[nodiscard]] int GetRawFD() const noexcept {
         return opened_fd_;
     }
 

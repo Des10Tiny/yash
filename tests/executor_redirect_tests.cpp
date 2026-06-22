@@ -1,8 +1,9 @@
+#include "doctest.h"
 #include "executor/executor.hpp"
+#include "utils/mute_tests.hpp"
 
 #include <filesystem>
 #include <fstream>
-#include <gtest/gtest.h>
 #include <string>
 #include <sys/stat.h>
 
@@ -25,7 +26,7 @@ std::string ReadFileContents(const std::string& path) {
 // REDIRECTION TESTS
 // ============================================================================
 
-class RedirectionTest : public ::testing::Test {
+class RedirectionTest {
 protected:
     Executor executor;
     const std::string test_dir = "/tmp/yash_redir_tests";
@@ -33,7 +34,7 @@ protected:
     const std::string in_file = "/tmp/yash_redir_tests/in.txt";
     const std::string no_perm_file = "/tmp/yash_redir_tests/no_perm.txt";
 
-    void SetUp() override {
+    RedirectionTest() {
         std::filesystem::create_directory(test_dir);
 
         std::ofstream in(in_file);
@@ -46,7 +47,7 @@ protected:
         chmod(no_perm_file.c_str(), S_IRUSR);
     }
 
-    void TearDown() override {
+    ~RedirectionTest() {
         std::filesystem::remove_all(test_dir);
     }
 
@@ -68,72 +69,83 @@ protected:
     }
 };
 
-TEST_F(RedirectionTest, OutputRedirectionTruncatesFile) {
+TEST_CASE_FIXTURE(RedirectionTest, "OutputRedirectionTruncatesFile") {
     std::ofstream f(out_file);
     f << "OLD_TRASH_DATA_THAT_SHOULD_BE_DELETED";
     f.close();
 
     auto p = MakeRedirPipeline({"echo", "-n", "new_data"}, "", out_file, false);
-    EXPECT_EQ(executor.RunPipeline(p), 0);
+    CHECK(executor.RunPipeline(p) == 0);
 
-    EXPECT_EQ(ReadFileContents(out_file), "new_data");
+    CHECK(ReadFileContents(out_file) == "new_data");
 }
 
-TEST_F(RedirectionTest, OutputRedirectionAppendsToFile) {
+TEST_CASE_FIXTURE(RedirectionTest, "OutputRedirectionAppendsToFile") {
     std::ofstream f(out_file);
     f << "line1\n";
     f.close();
 
     auto p = MakeRedirPipeline({"echo", "-n", "line2"}, "", out_file, true);
-    EXPECT_EQ(executor.RunPipeline(p), 0);
+    CHECK(executor.RunPipeline(p) == 0);
 
-    EXPECT_EQ(ReadFileContents(out_file), "line1\nline2");
+    CHECK(ReadFileContents(out_file) == "line1\nline2");
 }
 
-TEST_F(RedirectionTest, InputRedirectionReadsFromFile) {
+TEST_CASE_FIXTURE(RedirectionTest, "InputRedirectionReadsFromFile") {
     auto p = MakeRedirPipeline({"cat"}, in_file, out_file, false);
-    EXPECT_EQ(executor.RunPipeline(p), 0);
+    CHECK(executor.RunPipeline(p) == 0);
 
-    EXPECT_EQ(ReadFileContents(out_file), "hello_from_input\n");
+    CHECK(ReadFileContents(out_file) == "hello_from_input\n");
 }
 
-TEST_F(RedirectionTest, CombinedInputAndOutputRedirection) {
+TEST_CASE_FIXTURE(RedirectionTest, "CombinedInputAndOutputRedirection") {
     auto p = MakeRedirPipeline({"tr", "a-z", "A-Z"}, in_file, out_file, false);
-    EXPECT_EQ(executor.RunPipeline(p), 0);
+    CHECK(executor.RunPipeline(p) == 0);
 
-    EXPECT_EQ(ReadFileContents(out_file), "HELLO_FROM_INPUT\n");
+    CHECK(ReadFileContents(out_file) == "HELLO_FROM_INPUT\n");
 }
 
-TEST_F(RedirectionTest, InputFromNonExistentFileFails) {
+TEST_CASE_FIXTURE(RedirectionTest, "InputFromNonExistentFileFails") {
+    MuteSTDERR mute;
+
     auto p = MakeRedirPipeline({"cat"}, "/tmp/yash_redir_tests/GHOST_FILE.txt", "", false);
 
     int status = executor.RunPipeline(p);
-    EXPECT_NE(status, 0);
+    CHECK(status != 0);
 }
 
-TEST_F(RedirectionTest, OutputToReadOnlyFileFails) {
+TEST_CASE_FIXTURE(RedirectionTest, "OutputToReadOnlyFileFails") {
+    if (geteuid() == 0) {
+        MESSAGE("Skipping test: running as root (bypasses file permissions)");
+        return;
+    }
+
+    MuteSTDERR mute;
+
     auto p = MakeRedirPipeline({"echo", "hacker"}, "", no_perm_file, false);
 
     int status = executor.RunPipeline(p);
-    EXPECT_NE(status, 0);
+    CHECK(status != 0);
 
-    EXPECT_EQ(ReadFileContents(no_perm_file), "secret");
+    CHECK(ReadFileContents(no_perm_file) == "secret");
 }
 
-TEST_F(RedirectionTest, OutputToDirectoryFails) {
+TEST_CASE_FIXTURE(RedirectionTest, "OutputToDirectoryFails") {
+    MuteSTDERR mute;
+
     auto p = MakeRedirPipeline({"echo", "test"}, "", test_dir, false);
 
     int status = executor.RunPipeline(p);
-    EXPECT_NE(status, 0);
+    CHECK(status != 0);
 }
 
-TEST_F(RedirectionTest, ReadAndWriteToSameFileClearsIt) {
+TEST_CASE_FIXTURE(RedirectionTest, "ReadAndWriteToSameFileClearsIt") {
     std::ofstream f(in_file);
     f << "data";
     f.close();
 
     auto p = MakeRedirPipeline({"cat"}, in_file, in_file, false);
-    EXPECT_EQ(executor.RunPipeline(p), 0);
+    CHECK(executor.RunPipeline(p) == 0);
 
-    EXPECT_EQ(ReadFileContents(in_file), "");
+    CHECK(ReadFileContents(in_file) == "");
 }

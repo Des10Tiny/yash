@@ -1,5 +1,6 @@
 set(YASH_SOURCES
     tokenizer/tokenizer.cpp
+    expander/expander.cpp
     parser/parser.cpp
     executor/executor.cpp
     utils/config_parser.cpp

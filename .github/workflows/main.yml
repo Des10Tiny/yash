@@ -22,6 +22,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
       - name: Configure CMake
         run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_TESTS=ON -DBUILD_TESTS_SANITIZED=OFF
 
@@ -31,7 +36,7 @@ jobs:
       - name: Run Tests
         working-directory: build
 
-        run: ctest --output-on-failure -C ${{ matrix.build_type }}
+        run: python3 ../scripts/run_tests.py
 
   test-sanitized:
     name: Sanitized Tests |${{ matrix.build_type }}| on ${{ matrix.os }}
@@ -45,6 +50,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
       - name: Configure CMake
         run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_TESTS=OFF -DBUILD_TESTS_SANITIZED=ON
 
@@ -54,7 +64,7 @@ jobs:
       - name: Run Tests
         working-directory: build
 
-        run: ctest --output-on-failure -C ${{ matrix.build_type }}
+        run: python3 ../scripts/run_tests.py
 
   all-possible-test:
     name: All Tests on |${{ matrix.build_type }}| on ${{ matrix.os }}
@@ -68,6 +78,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
       - name: Configure CMake
         run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_TESTS=ON -DBUILD_TESTS_SANITIZED=ON
 
@@ -77,7 +92,7 @@ jobs:
       - name: Run Tests
         working-directory: build
 
-        run: ctest --output-on-failure
+        run: python3 ../scripts/run_tests.py
 
   call-release:
     needs: [test-basic, test-sanitized, all-possible-test]
