@@ -115,6 +115,11 @@ TEST_CASE_FIXTURE(RedirectionTest, "InputFromNonExistentFileFails") {
 }
 
 TEST_CASE_FIXTURE(RedirectionTest, "OutputToReadOnlyFileFails") {
+    if (geteuid() == 0) {
+        MESSAGE("Skipping test: running as root (bypasses file permissions)");
+        return;
+    }
+
     MuteSTDERR mute;
 
     auto p = MakeRedirPipeline({"echo", "hacker"}, "", no_perm_file, false);

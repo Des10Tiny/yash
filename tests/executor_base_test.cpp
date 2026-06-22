@@ -177,7 +177,7 @@ TEST_CASE_FIXTURE(ExecutorTest, "MachineGun_1000_CommandsSpeedTest") {
 }
 
 TEST_CASE_FIXTURE(ExecutorTest, "IdioticInput_MaxArgsLimit") {
-    MuteSTDERR mute;
+    MuteAllSTD mute;
 
     std::vector<std::string> args = {"echo"};
     for (int i = 0; i < 50000; ++i) {
