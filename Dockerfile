@@ -13,7 +13,7 @@ RUN cmake -B build -DCMAKE_BUILD_TYPE=Release  && \
 FROM ubuntu:24.04
 WORKDIR /app
 
-LABEL org.opencontainers.image.description "yash — a high-performance Unix-like shell in C++ with a modular design and state machine tokenizer."
+LABEL org.opencontainers.image.description yash — a high-performance Unix-like shell in C++ with a modular design and state machine tokenizer.
 
 COPY --from=builder /src/build/src/yash .
 
