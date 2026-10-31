@@ -1,7 +1,7 @@
+import os
 import subprocess
 import sys
-import os
-import concurrent.futures
+from pathlib import Path
 
 
 class Colors:
@@ -12,49 +12,52 @@ class Colors:
     ENDC = "\033[0m"
 
 
-def color_print(text, color):
+def color_print(text: str, color: str) -> None:
     print(f"{color}{text}{Colors.ENDC}")
 
 
-def is_executable(path):
+def is_executable(path: Path) -> bool:
     return (
-        os.path.isfile(path)
+        path.is_file()
         and os.access(path, os.X_OK)
-        and not path.endswith(".cmake")
+        and path.name.startswith("yashTests")
+        and not path.name.endswith(".cmake")
     )
 
 
-def run_single_binary(binary_path):
-    color_print(f"--- Starting: {binary_path} ---", Colors.WARNING)
+def is_sanitizer(path: Path) -> bool:
+    name = path.name.lower()
+    return any(keyword in name for keyword in ("sanitiz", "asan", "ubsan", "tsan"))
 
-    process = subprocess.Popen(
-        [os.path.abspath(binary_path)], stdout=sys.stdout, stderr=sys.stderr, text=True
-    )
 
-    return_code = process.wait()
+def run_single_binary(binary: Path) -> int:
+    color_print(f"--- Starting: {binary} ---", Colors.WARNING)
 
-    if return_code != 0:
+    process = subprocess.run([str(binary.resolve())])
+
+    if process.returncode != 0:
         color_print(
-            f"!!! Test binary {binary_path} FAILED with code {return_code} !!!",
+            f"!!! Test binary {binary} FAILED with code {process.returncode} !!!",
             Colors.FAIL,
         )
     else:
-        color_print(f"--- Finished: {binary_path} (SUCCESS) ---", Colors.GREEN)
+        color_print(f"--- Finished: {binary} (SUCCESS) ---", Colors.GREEN)
 
-    return return_code
+    return process.returncode
 
 
-def run_all_tests():
-    search_path = "./tests"
-    test_binaries = []
+def run_all_tests() -> None:
+    search_path = Path(sys.argv[1] if len(sys.argv) > 1 else "./tests")
 
-    if os.path.exists(search_path):
-        for root, dirs, files in os.walk(search_path):
-            for file in files:
-                full_path = os.path.join(root, file)
+    if not search_path.exists():
+        color_print(
+            f"No executable test binaries found in {search_path}!", Colors.HEADER
+        )
+        sys.exit(0)
 
-                if file.startswith("yashTests") and is_executable(full_path):
-                    test_binaries.append(full_path)
+    test_binaries: list[Path] = [
+        path for path in search_path.rglob("yashTests*") if is_executable(path)
+    ]
 
     if not test_binaries:
         color_print(
@@ -62,14 +65,28 @@ def run_all_tests():
         )
         sys.exit(0)
 
+    test_binaries.sort(key=lambda p: (1 if is_sanitizer(p) else 0, p.name, str(p)))
+
     color_print(
-        f"Found {len(test_binaries)} test binaries: {test_binaries}", Colors.HEADER
+        f"Found {len(test_binaries)} test binaries: {[str(p) for p in test_binaries]}",
+        Colors.HEADER,
     )
 
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        results = list(executor.map(run_single_binary, test_binaries))
+    failed_binaries: list[Path] = []
 
-    if any(code != 0 for code in results):
+    for binary in test_binaries:
+        if is_sanitizer(binary) and failed_binaries:
+            color_print(
+                "\nSkipping sanitized tests because earlier tests failed.",
+                Colors.WARNING,
+            )
+            break
+
+        return_code = run_single_binary(binary)
+        if return_code != 0:
+            failed_binaries.append(binary)
+
+    if failed_binaries:
         color_print("\nSome tests failed!", Colors.FAIL)
         sys.exit(1)
 
