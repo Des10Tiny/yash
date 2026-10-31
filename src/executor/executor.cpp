@@ -51,7 +51,11 @@ int Executor::RunPipeline(Pipeline& pipeline) {
                     "Executor(): Ask new fd"
 
                 );
-                pipe.CreatePipe();
+
+                if (!pipe.CreatePipe()) {
+                    throw YashSystemError("Cannot make new pipe: resource limit reached");
+                }
+
                 LOG_DEBUG(
                     "Get new fd Read={} Write={}", pipe.GetRawReadFD(), pipe.GetRawWriteFD()
 

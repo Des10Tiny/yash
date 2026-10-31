@@ -7,6 +7,7 @@
 
 #include "utils/logger.hpp"
 
+
 class ScopedPipe {
 public:
     explicit ScopedPipe() noexcept {
@@ -37,14 +38,14 @@ public:
         return *this;
     };
 
-    void CreatePipe() noexcept(false) {
+    [[nodiscard("You must verify if pipe was actually created before using it")]] bool
+    CreatePipe() noexcept {
         CloseAllRawFD();
         std::array<int, 2> raw_pipe_fd;
 
         if (pipe(raw_pipe_fd.data()) == -1) {
-            throw std::system_error(
-                errno, std::generic_category(), "CreatePipe(): Cannot make new pipe"
-            );
+            LOG_WARN("CreatePipe(): failed to create pipe: {}", std::strerror(errno));
+            return false;
         }
 
         raw_read_fd_ = raw_pipe_fd[0];
@@ -54,6 +55,7 @@ public:
             "CreatePipe(): Get current FD: Read={} Write={}", raw_read_fd_, raw_write_fd_
 
         );
+        return true;
     }
 
     void CloseRawReadFD() noexcept {
