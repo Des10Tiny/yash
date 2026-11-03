@@ -68,7 +68,7 @@ public:
         CloseAllRawFD();
         std::array<int, 2> raw_pipe_fd;
 
-        if (pipe(raw_pipe_fddata()) == -1) {
+        if (pipe(raw_pipe_fd.data()) == -1) {
             LOG_WARN("CreatePipe(): failed to create pipe: {}", std::strerror(errno));
             return false;
         }
