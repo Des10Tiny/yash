@@ -40,6 +40,14 @@ If you just want to run the latest build in an isolated environment:
 docker pull ghcr.io/des10tiny/yash:latest
 docker run -it ghcr.io/des10tiny/yash:latest
 ```
+## Dependencies & Acknowledgments
+
+This project is built using modern C++20 and relies on the following open-source libraries:
+
+* [replxx](https://github.com/AmokHuginnsson/replxx) - A lightweight, portable replacement for GNU Readline with real-time syntax highlighting, hints, and history support
+* [doctest](https://github.com/doctest/doctest) - Ultra-fast, feature-rich C++ testing framework used for the unit test suite
+
+All dependencies are automatically managed and fetched at configure-time via CMake `FetchContent` (no manual installation required)
 
 ## License
 
