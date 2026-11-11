@@ -9,15 +9,15 @@ UseTab: Never
 ColumnLimit: 100
 
 AllowShortFunctionsOnASingleLine: None
-AllowShortIfStatementsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
-AllowShortBlocksOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
 AllowShortLambdasOnASingleLine: All
-AlwaysBreakTemplateDeclarations: Yes
+BreakTemplateDeclarations: Yes
 
 NamespaceIndentation: None
-AlignConsecutiveAssignments: false
-AlignConsecutiveDeclarations: false
+AlignConsecutiveAssignments: None
+AlignConsecutiveDeclarations: None
 
 DerivePointerAlignment: false
 PointerAlignment: Left
@@ -27,10 +27,11 @@ ConstructorInitializerIndentWidth: 4
 
 AlignAfterOpenBracket: BlockIndent
 BinPackArguments: false
-BinPackParameters: false
+BinPackParameters: OnePerLine
 
 AccessModifierOffset: -4
 
-SortIncludes: true
+SortIncludes:
+  Enabled: true
 KeepEmptyLinesAtTheStartOfBlocks: false
 ...
