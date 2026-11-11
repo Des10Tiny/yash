@@ -9,6 +9,12 @@
 class Yash {
 public:
     Yash();
+
+    Yash(const Yash&) = delete;
+    Yash(Yash&&) = delete;
+    Yash& operator=(const Yash&) = delete;
+    Yash& operator=(Yash&&) = delete;
+
     ~Yash();
 
     int Run();
