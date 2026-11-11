@@ -132,7 +132,7 @@ public:
     }
 
     /**
-     * Destructor 
+     * Destructor
      * Automatically closes any remaining open file descriptors
      */
     ~ScopedPipe() noexcept {

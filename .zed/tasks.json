@@ -43,4 +43,10 @@
     "args": ["scripts/run_tests.py", "out/Release-Tests"],
     "use_new_terminal": true,
   },
+
+  {
+    "label": "9. Format: Clang-Format All",
+    "command": "cmake --build --preset Debug-Tests-Sanitizers --target format",
+    "use_new_terminal": true
+  }
 ]
