@@ -3,6 +3,7 @@
 #include "executor/executor.hpp"
 #include "utils/config_parser.hpp"
 #include <filesystem>
+#include <replxx.hxx>
 #include <string>
 
 class Yash {
@@ -16,7 +17,6 @@ private:
     [[nodiscard]] std::filesystem::path GetConfigDir() const;
     void SetupSignals();
 
-    void PrintPrompt() const;
     void ProcessLine(const std::string& line);
     void SayGoodbye() const;
 
@@ -32,4 +32,5 @@ private:
     Executor executor_;
     int last_exit_status_ = 0;
     bool keep_running_ = true;
+    replxx::Replxx rx_;
 };

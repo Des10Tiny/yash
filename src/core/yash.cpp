@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <sstream>
+#include <string>
 
 #include "expander/expander.hpp"
 #include "parser/parser.hpp"
@@ -105,10 +106,6 @@ void Yash::SetupSignals() {
     std::signal(SIGINT, SignalHandler);
 }
 
-void Yash::PrintPrompt() const {
-    std::cout << "yash> ";
-}
-
 int Yash::Run() {
     std::cout << "YASH\n";
     std::cout << "Type 'exit' to quit or Ctrl+C to stop.\n";
@@ -122,11 +119,13 @@ int Yash::Run() {
             continue;
         }
 
-        PrintPrompt();
-        if (!std::getline(std::cin, line)) {
+        const char* input = rx_.input("yash> ");
+
+        if (input == nullptr) {
             break;
         }
 
+        line = input;
         if (line.empty()) {
             continue;
         }

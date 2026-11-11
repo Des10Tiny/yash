@@ -26,6 +26,14 @@ endif()
 option(BUILD_TESTS "Build all unit tests" OFF)
 option(BUILD_TESTS_SANITIZED "Build all unit tests with sanitizers" OFF)
 
+include(FetchContent)
+FetchContent_Declare(
+    replxx
+    GIT_REPOSITORY https://github.com/AmokHuginnsson/replxx.git
+    GIT_TAG        release-0.0.4
+)
+FetchContent_MakeAvailable(replxx)
+
 add_subdirectory(src)
 
 if(CMAKE_BUILD_TYPE MATCHES "Release")
