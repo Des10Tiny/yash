@@ -1,0 +1,46 @@
+[
+  {
+    "label": "1. Build: Debug | Tests | Sanitizers",
+    "command": "cmake --preset Debug-Tests-Sanitizers && cmake --build --preset Debug-Tests-Sanitizers",
+    "use_new_terminal": true,
+  },
+  {
+    "label": "2. Build: Debug | Tests",
+    "command": "cmake --preset Debug-Tests && cmake --build --preset Debug-Tests",
+    "use_new_terminal": true,
+  },
+  {
+    "label": "3. Build: Release",
+    "command": "cmake --preset Release && cmake --build --preset Release",
+    "use_new_terminal": true,
+  },
+  {
+    "label": "4. Build: Release | Tests",
+    "command": "cmake --preset Release-Tests && cmake --build --preset Release-Tests",
+    "use_new_terminal": true,
+  },
+  {
+    "label": "5. Run: Debug | Tests | Sanitizers",
+    "command": "./out/Debug-Tests-Sanitizers/src/yash",
+    "use_new_terminal": true,
+  },
+  {
+    "label": "6. Run: Release",
+    "command": "./out/Release/src/yash",
+    "use_new_terminal": true,
+  },
+
+
+  {
+    "label": "7. Test Script: Debug | Tests | Sanitizers",
+    "command": "python3",
+    "args": ["scripts/run_tests.py", "out/Debug-Tests-Sanitizers"],
+    "use_new_terminal": true,
+  },
+  {
+    "label": "8. Test Script: Release | Tests",
+    "command": "python3",
+    "args": ["scripts/run_tests.py", "out/Release-Tests"],
+    "use_new_terminal": true,
+  },
+]

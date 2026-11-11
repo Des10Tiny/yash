@@ -1,0 +1,34 @@
+[
+  {
+    "label": "Debug App: Yash Debug-Tests",
+    "adapter": "CodeLLDB",
+    "request": "launch",
+    "program": "$ZED_WORKTREE_ROOT/out/Debug-Tests/src/yash",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "args": []
+  },
+  {
+    "label": "Debug App: Yash Debug-Tests-Sanitizers",
+    "adapter": "CodeLLDB",
+    "request": "launch",
+    "program": "$ZED_WORKTREE_ROOT/out/Debug-Tests-Sanitizers/src/yash",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "args": []
+  },
+  {
+    "label": "Debug Tests: doctest Debug-Tests",
+    "adapter": "CodeLLDB",
+    "request": "launch",
+    "program": "$ZED_WORKTREE_ROOT/out/Debug-Tests/tests/yashTests",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "args": []
+  },
+  {
+    "label": "Debug Tests: doctest Debug-Tests-Sanitizers",
+    "adapter": "CodeLLDB",
+    "request": "launch",
+    "program": "$ZED_WORKTREE_ROOT/out/Debug-Tests-Sanitizers/tests/yashTests",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "args": []
+  }
+]
